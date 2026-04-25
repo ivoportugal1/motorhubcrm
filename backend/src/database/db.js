@@ -1,30 +1,35 @@
-const sqlite3 = require('sqlite3').verbose();
-const path = require('path');
+const { Pool } = require('pg');
 
-const raw = new sqlite3.Database(path.join(__dirname, '../../motorhub.db'));
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL || 'postgresql://localhost/motorhub'
+});
 
 // Promise wrapper
 const db = {
   run: (sql, params = []) => new Promise((res, rej) =>
-    raw.run(sql, params, function(err) { err ? rej(err) : res({ lastID: this.lastID, changes: this.changes }); })
+    pool.query(sql, params, (err, result) => {
+      if (err) rej(err);
+      else res({ lastID: result.rows[0]?.id, changes: result.rowCount });
+    })
   ),
   get: (sql, params = []) => new Promise((res, rej) =>
-    raw.get(sql, params, (err, row) => err ? rej(err) : res(row))
+    pool.query(sql, params, (err, result) => {
+      if (err) rej(err);
+      else res(result.rows[0]);
+    })
   ),
   all: (sql, params = []) => new Promise((res, rej) =>
-    raw.all(sql, params, (err, rows) => err ? rej(err) : res(rows))
-  ),
-  exec: (sql) => new Promise((res, rej) =>
-    raw.exec(sql, (err) => err ? rej(err) : res())
+    pool.query(sql, params, (err, result) => {
+      if (err) rej(err);
+      else res(result.rows);
+    })
   ),
 };
 
 const init = async () => {
-  await db.run('PRAGMA journal_mode = WAL');
-  await db.run('PRAGMA foreign_keys = ON');
-  await db.exec(`
+  await db.run(`
     CREATE TABLE IF NOT EXISTS oficinas (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      id SERIAL PRIMARY KEY,
       nome TEXT NOT NULL,
       email TEXT NOT NULL UNIQUE,
       telefone TEXT,
@@ -37,22 +42,26 @@ const init = async () => {
       horario_abertura TEXT,
       horario_fechamento TEXT,
       plano TEXT NOT NULL DEFAULT 'acelera',
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
+  `).catch(() => {});
 
+  await db.run(`
     CREATE TABLE IF NOT EXISTS usuarios (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      id SERIAL PRIMARY KEY,
       oficina_id INTEGER NOT NULL,
       nome TEXT NOT NULL,
       email TEXT NOT NULL UNIQUE,
       senha TEXT NOT NULL,
       role TEXT NOT NULL DEFAULT 'funcionario',
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (oficina_id) REFERENCES oficinas(id)
     );
+  `).catch(() => {});
 
+  await db.run(`
     CREATE TABLE IF NOT EXISTS clientes (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      id SERIAL PRIMARY KEY,
       oficina_id INTEGER NOT NULL,
       nome TEXT NOT NULL,
       cpf_cnpj TEXT,
@@ -60,12 +69,14 @@ const init = async () => {
       email TEXT,
       endereco TEXT,
       data_nascimento DATE,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (oficina_id) REFERENCES oficinas(id)
     );
+  `).catch(() => {});
 
+  await db.run(`
     CREATE TABLE IF NOT EXISTS veiculos (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      id SERIAL PRIMARY KEY,
       oficina_id INTEGER NOT NULL,
       cliente_id INTEGER,
       placa TEXT NOT NULL,
@@ -75,13 +86,15 @@ const init = async () => {
       cor TEXT,
       km_atual INTEGER DEFAULT 0,
       ativo INTEGER DEFAULT 1,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (oficina_id) REFERENCES oficinas(id),
       FOREIGN KEY (cliente_id) REFERENCES clientes(id)
     );
+  `).catch(() => {});
 
+  await db.run(`
     CREATE TABLE IF NOT EXISTS ordens (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      id SERIAL PRIMARY KEY,
       oficina_id INTEGER NOT NULL,
       numero TEXT NOT NULL,
       cliente_id INTEGER,
@@ -92,15 +105,17 @@ const init = async () => {
       valor_total REAL DEFAULT 0,
       observacoes TEXT,
       notas TEXT,
-      data_abertura DATETIME DEFAULT CURRENT_TIMESTAMP,
-      data_finalizacao DATETIME,
+      data_abertura TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      data_finalizacao TIMESTAMP,
       FOREIGN KEY (oficina_id) REFERENCES oficinas(id),
       FOREIGN KEY (cliente_id) REFERENCES clientes(id),
       FOREIGN KEY (veiculo_id) REFERENCES veiculos(id)
     );
+  `).catch(() => {});
 
+  await db.run(`
     CREATE TABLE IF NOT EXISTS ordem_itens (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      id SERIAL PRIMARY KEY,
       ordem_id INTEGER NOT NULL,
       descricao TEXT NOT NULL,
       tipo TEXT NOT NULL DEFAULT 'servico',
@@ -109,46 +124,40 @@ const init = async () => {
       valor_total REAL DEFAULT 0,
       FOREIGN KEY (ordem_id) REFERENCES ordens(id)
     );
+  `).catch(() => {});
 
+  await db.run(`
     CREATE TABLE IF NOT EXISTS caixas (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      id SERIAL PRIMARY KEY,
       oficina_id INTEGER NOT NULL,
       data DATE NOT NULL,
       saldo_inicial REAL DEFAULT 0,
       saldo_final REAL,
       status TEXT NOT NULL DEFAULT 'aberto',
       observacoes TEXT DEFAULT '',
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (oficina_id) REFERENCES oficinas(id)
     );
+  `).catch(() => {});
 
+  await db.run(`
     CREATE TABLE IF NOT EXISTS caixa_movimentos (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      id SERIAL PRIMARY KEY,
       caixa_id INTEGER NOT NULL,
       oficina_id INTEGER NOT NULL,
       tipo TEXT NOT NULL DEFAULT 'entrada',
       descricao TEXT NOT NULL,
       valor REAL NOT NULL DEFAULT 0,
       forma_pagamento TEXT DEFAULT 'dinheiro',
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (caixa_id) REFERENCES caixas(id),
       FOREIGN KEY (oficina_id) REFERENCES oficinas(id)
     );
+  `).catch(() => {});
 
-    CREATE TABLE IF NOT EXISTS transferencias (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      oficina_id INTEGER NOT NULL,
-      descricao TEXT NOT NULL,
-      valor REAL NOT NULL DEFAULT 0,
-      conta_origem TEXT DEFAULT '',
-      conta_destino TEXT DEFAULT '',
-      data DATE NOT NULL,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY (oficina_id) REFERENCES oficinas(id)
-    );
-
+  await db.run(`
     CREATE TABLE IF NOT EXISTS lancamentos (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      id SERIAL PRIMARY KEY,
       oficina_id INTEGER NOT NULL,
       tipo TEXT NOT NULL DEFAULT 'receita',
       descricao TEXT NOT NULL,
@@ -158,13 +167,29 @@ const init = async () => {
       data_pagamento DATE,
       status TEXT NOT NULL DEFAULT 'pendente',
       ordem_id INTEGER,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (oficina_id) REFERENCES oficinas(id),
       FOREIGN KEY (ordem_id) REFERENCES ordens(id)
     );
+  `).catch(() => {});
 
+  await db.run(`
+    CREATE TABLE IF NOT EXISTS transferencias (
+      id SERIAL PRIMARY KEY,
+      oficina_id INTEGER NOT NULL,
+      descricao TEXT NOT NULL,
+      valor REAL NOT NULL DEFAULT 0,
+      conta_origem TEXT DEFAULT '',
+      conta_destino TEXT DEFAULT '',
+      data DATE NOT NULL,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (oficina_id) REFERENCES oficinas(id)
+    );
+  `).catch(() => {});
+
+  await db.run(`
     CREATE TABLE IF NOT EXISTS manutencoes (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      id SERIAL PRIMARY KEY,
       oficina_id INTEGER NOT NULL,
       veiculo_id INTEGER NOT NULL,
       cliente_id INTEGER,
@@ -175,14 +200,16 @@ const init = async () => {
       data_proximo DATE,
       status TEXT NOT NULL DEFAULT 'ativo',
       observacoes TEXT DEFAULT '',
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (oficina_id) REFERENCES oficinas(id),
       FOREIGN KEY (veiculo_id) REFERENCES veiculos(id),
       FOREIGN KEY (cliente_id) REFERENCES clientes(id)
     );
+  `).catch(() => {});
 
+  await db.run(`
     CREATE TABLE IF NOT EXISTS pecas (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      id SERIAL PRIMARY KEY,
       oficina_id INTEGER NOT NULL,
       codigo TEXT,
       nome TEXT NOT NULL,
@@ -195,24 +222,28 @@ const init = async () => {
       valor_custo REAL DEFAULT 0,
       valor_venda REAL DEFAULT 0,
       ativo INTEGER DEFAULT 1,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (oficina_id) REFERENCES oficinas(id)
     );
+  `).catch(() => {});
 
+  await db.run(`
     CREATE TABLE IF NOT EXISTS modelos_servicos (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      id SERIAL PRIMARY KEY,
       oficina_id INTEGER NOT NULL,
       nome TEXT NOT NULL,
       descricao TEXT,
       valor_padrao REAL DEFAULT 0,
       categoria TEXT DEFAULT 'servico',
       ativo INTEGER DEFAULT 1,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (oficina_id) REFERENCES oficinas(id)
     );
+  `).catch(() => {});
 
+  await db.run(`
     CREATE TABLE IF NOT EXISTS integracao (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      id SERIAL PRIMARY KEY,
       oficina_id INTEGER NOT NULL UNIQUE,
       whatsapp_ativo INTEGER DEFAULT 0,
       whatsapp_numero TEXT,
@@ -220,65 +251,10 @@ const init = async () => {
       smtp_ativo INTEGER DEFAULT 0,
       smtp_host TEXT,
       smtp_usuario TEXT,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (oficina_id) REFERENCES oficinas(id)
     );
-
-    CREATE TABLE IF NOT EXISTS lancamentos (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      oficina_id INTEGER NOT NULL,
-      tipo TEXT DEFAULT 'receita',
-      descricao TEXT NOT NULL,
-      categoria TEXT DEFAULT 'servico',
-      valor REAL NOT NULL,
-      status TEXT DEFAULT 'pendente',
-      data_vencimento DATE,
-      data_pagamento DATE,
-      ordem_id INTEGER,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY (oficina_id) REFERENCES oficinas(id),
-      FOREIGN KEY (ordem_id) REFERENCES ordens(id)
-    );
-  `);
-
-  // Migrations para colunas faltantes na tabela oficinas
-  try {
-    const oficinas = await db.get("PRAGMA table_info(oficinas)");
-    if (oficinas) {
-      const cols = await db.all("PRAGMA table_info(oficinas)");
-      const colNames = cols.map(c => c.name);
-
-      const camposFaltantes = [
-        { nome: 'endereco', tipo: 'TEXT' },
-        { nome: 'cidade', tipo: 'TEXT' },
-        { nome: 'uf', tipo: 'TEXT' },
-        { nome: 'cep', tipo: 'TEXT' },
-        { nome: 'cnpj', tipo: 'TEXT' },
-        { nome: 'inscricao_estadual', tipo: 'TEXT' },
-        { nome: 'horario_abertura', tipo: 'TEXT' },
-        { nome: 'horario_fechamento', tipo: 'TEXT' },
-      ];
-
-      for (const campo of camposFaltantes) {
-        if (!colNames.includes(campo.nome)) {
-          await db.run(`ALTER TABLE oficinas ADD COLUMN ${campo.nome} ${campo.tipo}`);
-        }
-      }
-    }
-  } catch (err) {
-    // Tabela pode não existir ainda
-  }
-
-  // Migrations para clientes - adicionar data_nascimento
-  try {
-    const cols = await db.all("PRAGMA table_info(clientes)");
-    const colNames = cols.map(c => c.name);
-    if (!colNames.includes('data_nascimento')) {
-      await db.run(`ALTER TABLE clientes ADD COLUMN data_nascimento DATE`);
-    }
-  } catch (err) {
-    // Tabela pode não existir ainda
-  }
+  `).catch(() => {});
 };
 
 init().catch(console.error);
