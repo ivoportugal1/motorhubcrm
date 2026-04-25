@@ -269,6 +269,9 @@ const init = async () => {
       FOREIGN KEY (oficina_id) REFERENCES oficinas(id)
     );
   `).catch(e => console.error("DB init:", e.message));
+
+  // ALTER TABLE to add missing columns (idempotent)
+  await db.run(`ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS ativo INTEGER DEFAULT 1`).catch(e => console.error("Alter usuarios:", e.message));
 };
 
 init().catch(console.error);

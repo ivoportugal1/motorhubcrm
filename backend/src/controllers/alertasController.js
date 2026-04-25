@@ -32,7 +32,7 @@ exports.getAlertas = async (req, res) => {
        JOIN veiculos v ON m.veiculo_id = v.id
        LEFT JOIN clientes c ON m.cliente_id = c.id
        WHERE m.oficina_id = ? AND m.status = 'ativo'
-       AND (m.data_proximo < DATE('now') OR m.km_proximo < 0)
+       AND (m.data_proximo < CURRENT_DATE OR m.km_proximo < 0)
        ORDER BY m.data_proximo ASC`,
       [oficina_id]
     );
@@ -78,7 +78,7 @@ exports.getAlertas = async (req, res) => {
        LEFT JOIN ordens o ON l.ordem_id = o.id
        LEFT JOIN clientes c ON o.cliente_id = c.id
        WHERE l.oficina_id = ? AND l.tipo = 'receita' AND l.status = 'pendente'
-       AND l.data_vencimento < DATE('now')
+       AND l.data_vencimento < CURRENT_DATE
        ORDER BY l.data_vencimento ASC`,
       [oficina_id]
     );
@@ -104,7 +104,7 @@ exports.getAlertas = async (req, res) => {
        LEFT JOIN clientes c ON o.cliente_id = c.id
        LEFT JOIN veiculos v ON o.veiculo_id = v.id
        WHERE o.oficina_id = ? AND o.status IN ('pré-orçamento', 'orçamento')
-       AND DATE(o.data_abertura) < DATE('now', '-7 days')
+       AND o.data_abertura < CURRENT_DATE - INTERVAL '7 days'
        ORDER BY o.data_abertura ASC`,
       [oficina_id]
     );
@@ -174,9 +174,9 @@ exports.getContagemAlertas = async (req, res) => {
   try {
     const alertas = await db.all(
       `SELECT
-        (SELECT COUNT(*) FROM manutencoes WHERE oficina_id = ? AND status = 'ativo' AND data_proximo < DATE('now')) as manutencao,
+        (SELECT COUNT(*) FROM manutencoes WHERE oficina_id = ? AND status = 'ativo' AND data_proximo < CURRENT_DATE) as manutencao,
         (SELECT COUNT(*) FROM pecas WHERE oficina_id = ? AND estoque_atual <= estoque_minimo AND ativo = 1) as estoque,
-        (SELECT COUNT(*) FROM lancamentos WHERE oficina_id = ? AND tipo = 'receita' AND status = 'pendente' AND data_vencimento < DATE('now')) as financeiro`,
+        (SELECT COUNT(*) FROM lancamentos WHERE oficina_id = ? AND tipo = 'receita' AND status = 'pendente' AND data_vencimento < CURRENT_DATE) as financeiro`,
       [oficina_id, oficina_id, oficina_id]
     );
 
