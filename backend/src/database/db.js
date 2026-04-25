@@ -1,7 +1,8 @@
 const { Pool } = require('pg');
 
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL || 'postgresql://localhost/motorhub'
+  connectionString: process.env.DATABASE_URL || 'postgresql://localhost/motorhub',
+  ssl: process.env.DATABASE_URL ? { rejectUnauthorized: false } : false
 });
 
 // Convert ? placeholders to $1, $2, etc for PostgreSQL
@@ -57,7 +58,7 @@ const init = async () => {
       plano TEXT NOT NULL DEFAULT 'acelera',
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
-  `).catch(() => {});
+  `).catch(e => console.error("DB init:", e.message));
 
   await db.run(`
     CREATE TABLE IF NOT EXISTS usuarios (
@@ -70,7 +71,7 @@ const init = async () => {
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (oficina_id) REFERENCES oficinas(id)
     );
-  `).catch(() => {});
+  `).catch(e => console.error("DB init:", e.message));
 
   await db.run(`
     CREATE TABLE IF NOT EXISTS clientes (
@@ -85,7 +86,7 @@ const init = async () => {
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (oficina_id) REFERENCES oficinas(id)
     );
-  `).catch(() => {});
+  `).catch(e => console.error("DB init:", e.message));
 
   await db.run(`
     CREATE TABLE IF NOT EXISTS veiculos (
@@ -103,7 +104,7 @@ const init = async () => {
       FOREIGN KEY (oficina_id) REFERENCES oficinas(id),
       FOREIGN KEY (cliente_id) REFERENCES clientes(id)
     );
-  `).catch(() => {});
+  `).catch(e => console.error("DB init:", e.message));
 
   await db.run(`
     CREATE TABLE IF NOT EXISTS ordens (
@@ -124,7 +125,7 @@ const init = async () => {
       FOREIGN KEY (cliente_id) REFERENCES clientes(id),
       FOREIGN KEY (veiculo_id) REFERENCES veiculos(id)
     );
-  `).catch(() => {});
+  `).catch(e => console.error("DB init:", e.message));
 
   await db.run(`
     CREATE TABLE IF NOT EXISTS ordem_itens (
@@ -137,7 +138,7 @@ const init = async () => {
       valor_total REAL DEFAULT 0,
       FOREIGN KEY (ordem_id) REFERENCES ordens(id)
     );
-  `).catch(() => {});
+  `).catch(e => console.error("DB init:", e.message));
 
   await db.run(`
     CREATE TABLE IF NOT EXISTS caixas (
@@ -151,7 +152,7 @@ const init = async () => {
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (oficina_id) REFERENCES oficinas(id)
     );
-  `).catch(() => {});
+  `).catch(e => console.error("DB init:", e.message));
 
   await db.run(`
     CREATE TABLE IF NOT EXISTS caixa_movimentos (
@@ -166,7 +167,7 @@ const init = async () => {
       FOREIGN KEY (caixa_id) REFERENCES caixas(id),
       FOREIGN KEY (oficina_id) REFERENCES oficinas(id)
     );
-  `).catch(() => {});
+  `).catch(e => console.error("DB init:", e.message));
 
   await db.run(`
     CREATE TABLE IF NOT EXISTS lancamentos (
@@ -184,7 +185,7 @@ const init = async () => {
       FOREIGN KEY (oficina_id) REFERENCES oficinas(id),
       FOREIGN KEY (ordem_id) REFERENCES ordens(id)
     );
-  `).catch(() => {});
+  `).catch(e => console.error("DB init:", e.message));
 
   await db.run(`
     CREATE TABLE IF NOT EXISTS transferencias (
@@ -198,7 +199,7 @@ const init = async () => {
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (oficina_id) REFERENCES oficinas(id)
     );
-  `).catch(() => {});
+  `).catch(e => console.error("DB init:", e.message));
 
   await db.run(`
     CREATE TABLE IF NOT EXISTS manutencoes (
@@ -218,7 +219,7 @@ const init = async () => {
       FOREIGN KEY (veiculo_id) REFERENCES veiculos(id),
       FOREIGN KEY (cliente_id) REFERENCES clientes(id)
     );
-  `).catch(() => {});
+  `).catch(e => console.error("DB init:", e.message));
 
   await db.run(`
     CREATE TABLE IF NOT EXISTS pecas (
@@ -238,7 +239,7 @@ const init = async () => {
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (oficina_id) REFERENCES oficinas(id)
     );
-  `).catch(() => {});
+  `).catch(e => console.error("DB init:", e.message));
 
   await db.run(`
     CREATE TABLE IF NOT EXISTS modelos_servicos (
@@ -252,7 +253,7 @@ const init = async () => {
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (oficina_id) REFERENCES oficinas(id)
     );
-  `).catch(() => {});
+  `).catch(e => console.error("DB init:", e.message));
 
   await db.run(`
     CREATE TABLE IF NOT EXISTS integracao (
@@ -267,7 +268,7 @@ const init = async () => {
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (oficina_id) REFERENCES oficinas(id)
     );
-  `).catch(() => {});
+  `).catch(e => console.error("DB init:", e.message));
 };
 
 init().catch(console.error);
