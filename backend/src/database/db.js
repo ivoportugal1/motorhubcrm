@@ -13,7 +13,11 @@ const convertSQL = (sql) => {
 // Promise wrapper
 const db = {
   run: (sql, params = []) => new Promise((res, rej) => {
-    const converted = convertSQL(sql);
+    let converted = convertSQL(sql);
+    // Add RETURNING id for INSERT statements
+    if (converted.toLowerCase().includes('insert') && !converted.includes('returning')) {
+      converted += ' RETURNING id';
+    }
     pool.query(converted, params, (err, result) => {
       if (err) rej(err);
       else res({ lastID: result.rows[0]?.id, changes: result.rowCount });
