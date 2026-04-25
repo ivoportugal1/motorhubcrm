@@ -90,8 +90,8 @@ exports.resumo = async (req, res) => {
     const { oficina_id } = req.user;
 
     const [receitas_mes, despesas_mes, a_receber, a_pagar, ultimos] = await Promise.all([
-      db.get("SELECT COALESCE(SUM(valor),0) as total FROM lancamentos WHERE oficina_id=? AND tipo='receita' AND status='pago' AND strftime('%Y-%m',data_pagamento)=strftime('%Y-%m','now')", [oficina_id]),
-      db.get("SELECT COALESCE(SUM(valor),0) as total FROM lancamentos WHERE oficina_id=? AND tipo='despesa' AND status='pago' AND strftime('%Y-%m',data_pagamento)=strftime('%Y-%m','now')", [oficina_id]),
+      db.get("SELECT COALESCE(SUM(valor),0) as total FROM lancamentos WHERE oficina_id=? AND tipo='receita' AND status='pago' AND to_char(data_pagamento, 'YYYY-MM')=to_char(now(), 'YYYY-MM')", [oficina_id]),
+      db.get("SELECT COALESCE(SUM(valor),0) as total FROM lancamentos WHERE oficina_id=? AND tipo='despesa' AND status='pago' AND to_char(data_pagamento, 'YYYY-MM')=to_char(now(), 'YYYY-MM')", [oficina_id]),
       db.get("SELECT COALESCE(SUM(valor),0) as total, COUNT(*) as qtd FROM lancamentos WHERE oficina_id=? AND tipo='receita' AND status='pendente'", [oficina_id]),
       db.get("SELECT COALESCE(SUM(valor),0) as total, COUNT(*) as qtd FROM lancamentos WHERE oficina_id=? AND tipo='despesa' AND status='pendente'", [oficina_id]),
       db.all("SELECT * FROM lancamentos WHERE oficina_id=? ORDER BY created_at DESC LIMIT 10", [oficina_id]),

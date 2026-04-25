@@ -127,7 +127,7 @@ exports.dashboard = async (req, res) => {
     const { oficina_id } = req.user;
     const [abertas, mes, veiculos, clientes, ultimas] = await Promise.all([
       db.get("SELECT COUNT(*) as total FROM ordens WHERE oficina_id=? AND status IN ('orcamento','andamento','pre_orcamento')", [oficina_id]),
-      db.get("SELECT COUNT(*) as total, SUM(valor_total) as receita FROM ordens WHERE oficina_id=? AND strftime('%Y-%m', data_abertura)=strftime('%Y-%m','now')", [oficina_id]),
+      db.get("SELECT COUNT(*) as total, SUM(valor_total) as receita FROM ordens WHERE oficina_id=? AND to_char(data_abertura, 'YYYY-MM')=to_char(now(), 'YYYY-MM')", [oficina_id]),
       db.get('SELECT COUNT(*) as total FROM veiculos WHERE oficina_id=? AND ativo=1', [oficina_id]),
       db.get('SELECT COUNT(*) as total FROM clientes WHERE oficina_id=?', [oficina_id]),
       db.all(`SELECT o.numero, o.status, o.valor_total, o.data_abertura, c.nome as cliente_nome, v.placa
