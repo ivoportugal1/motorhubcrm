@@ -16,7 +16,7 @@ export default function Register() {
     setError(''); setLoading(true);
     try {
       await register(form);
-      navigate('/dashboard');
+      navigate('/app/dashboard');
     } catch (err) {
       setError(err.response?.data?.error || 'Erro ao criar conta');
     } finally {

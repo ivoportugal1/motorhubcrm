@@ -54,7 +54,7 @@ export default function Caixa() {
     <>
       <div className="page-header">
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <button className="btn btn-ghost btn-sm" onClick={() => navigate('/financeiro')}><i className="fas fa-arrow-left"></i></button>
+          <button className="btn btn-ghost btn-sm" onClick={() => navigate('/app/financeiro')}><i className="fas fa-arrow-left"></i></button>
           <div><h1>Caixa</h1><div className="page-header-sub">{today()}</div></div>
         </div>
         <div style={{ display: 'flex', gap: 8 }}>

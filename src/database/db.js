@@ -198,6 +198,47 @@ const init = async () => {
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (oficina_id) REFERENCES oficinas(id)
     );
+
+    CREATE TABLE IF NOT EXISTS modelos_servicos (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      oficina_id INTEGER NOT NULL,
+      nome TEXT NOT NULL,
+      descricao TEXT,
+      valor_padrao REAL DEFAULT 0,
+      categoria TEXT DEFAULT 'servico',
+      ativo INTEGER DEFAULT 1,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (oficina_id) REFERENCES oficinas(id)
+    );
+
+    CREATE TABLE IF NOT EXISTS integracao (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      oficina_id INTEGER NOT NULL UNIQUE,
+      whatsapp_ativo INTEGER DEFAULT 0,
+      whatsapp_numero TEXT,
+      whatsapp_token TEXT,
+      smtp_ativo INTEGER DEFAULT 0,
+      smtp_host TEXT,
+      smtp_usuario TEXT,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (oficina_id) REFERENCES oficinas(id)
+    );
+
+    CREATE TABLE IF NOT EXISTS lancamentos (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      oficina_id INTEGER NOT NULL,
+      tipo TEXT DEFAULT 'receita',
+      descricao TEXT NOT NULL,
+      categoria TEXT DEFAULT 'servico',
+      valor REAL NOT NULL,
+      status TEXT DEFAULT 'pendente',
+      data_vencimento DATE,
+      data_pagamento DATE,
+      ordem_id INTEGER,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (oficina_id) REFERENCES oficinas(id),
+      FOREIGN KEY (ordem_id) REFERENCES ordens(id)
+    );
   `);
 
   // Migrations para colunas faltantes na tabela oficinas

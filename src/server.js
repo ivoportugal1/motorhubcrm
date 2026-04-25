@@ -16,9 +16,14 @@ app.use('/api/financeiro',    require('./routes/financeiro'));
 app.use('/api/caixa',         require('./routes/caixa'));
 app.use('/api/transferencias',require('./routes/transferencias'));
 app.use('/api/manutencoes',   require('./routes/manutencoes'));
-app.use('/api/relatorios',    require('./routes/relatorios'));
-app.use('/api/oficina',       require('./routes/oficinas'));
-app.use('/api/alertas',       require('./routes/alertas'));
+app.use('/api/relatorios',       require('./routes/relatorios'));
+app.use('/api/oficina',          require('./routes/oficinas'));
+app.use('/api/alertas',          require('./routes/alertas'));
+app.use('/api/usuarios',         require('./routes/usuarios'));
+app.use('/api/modelos-servicos', require('./routes/modelosServicos'));
+app.use('/api/clientes',         require('./routes/clienteDetalhes'));
+app.use('/api/documentos',       require('./routes/documentos'));
+app.use('/api/integracao',       require('./routes/integracao'));
 
 app.get('/api/health', (_, res) => res.json({ ok: true }));
 

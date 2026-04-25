@@ -54,7 +54,7 @@ export default function Contas() {
     <>
       <div className="page-header">
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <button className="btn btn-ghost btn-sm" onClick={() => navigate('/financeiro')}><i className="fas fa-arrow-left"></i></button>
+          <button className="btn btn-ghost btn-sm" onClick={() => navigate('/app/financeiro')}><i className="fas fa-arrow-left"></i></button>
           <div><h1>Contas — Pagar / Receber</h1></div>
         </div>
         <button className="btn btn-primary" onClick={openNovo}><i className="fas fa-plus"></i> Novo Lançamento</button>

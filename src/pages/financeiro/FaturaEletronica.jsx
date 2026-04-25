@@ -6,7 +6,7 @@ export default function FaturaEletronica() {
     <>
       <div className="page-header">
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <button className="btn btn-ghost btn-sm" onClick={() => navigate('/financeiro')}><i className="fas fa-arrow-left"></i></button>
+          <button className="btn btn-ghost btn-sm" onClick={() => navigate('/app/financeiro')}><i className="fas fa-arrow-left"></i></button>
           <div><h1>Fatura Eletrônica</h1><div className="page-header-sub">NF-e / NFS-e / NFC-e</div></div>
         </div>
       </div>

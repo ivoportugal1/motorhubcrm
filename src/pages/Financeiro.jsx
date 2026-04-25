@@ -1,10 +1,10 @@
 import { useNavigate } from 'react-router-dom';
 
 const modulos = [
-  { path: '/financeiro/caixa',            icon: 'fas fa-cash-register', label: 'Caixa',                cor: '#4caf7d', corDark: '#388e5c' },
-  { path: '/financeiro/contas',           icon: 'fas fa-receipt',       label: 'Contas - pagar/receber', cor: '#c0392b', corDark: '#922b21' },
-  { path: '/financeiro/faturas',          icon: 'fas fa-file-invoice',  label: 'Fatura eletrônica',     cor: '#f0a500', corDark: '#c87d00' },
-  { path: '/financeiro/transferencias',   icon: 'fas fa-exchange-alt',  label: 'Transferências',        cor: '#f0a500', corDark: '#c87d00' },
+  { path: '/app/financeiro/caixa',            icon: 'fas fa-cash-register', label: 'Caixa',                cor: '#4caf7d', corDark: '#388e5c' },
+  { path: '/app/financeiro/contas',           icon: 'fas fa-receipt',       label: 'Contas - pagar/receber', cor: '#c0392b', corDark: '#922b21' },
+  { path: '/app/financeiro/faturas',          icon: 'fas fa-file-invoice',  label: 'Fatura eletrônica',     cor: '#f0a500', corDark: '#c87d00' },
+  { path: '/app/financeiro/transferencias',   icon: 'fas fa-exchange-alt',  label: 'Transferências',        cor: '#f0a500', corDark: '#c87d00' },
 ];
 
 export default function Financeiro() {

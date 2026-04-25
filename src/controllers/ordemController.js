@@ -80,9 +80,21 @@ exports.atualizarStatus = async (req, res) => {
     const validos = ['pre_orcamento', 'orcamento', 'andamento', 'finalizada', 'cancelada', 'faturada'];
     if (!validos.includes(status)) return res.status(422).json({ error: 'Status inválido' });
 
+    const ordem = await db.get('SELECT * FROM ordens WHERE id = ? AND oficina_id = ?', [req.params.id, req.user.oficina_id]);
+    if (!ordem) return res.status(404).json({ error: 'Ordem não encontrada' });
+
     const data_finalizacao = ['finalizada', 'faturada'].includes(status) ? new Date().toISOString() : null;
     await db.run('UPDATE ordens SET status = ?, data_finalizacao = ? WHERE id = ? AND oficina_id = ?',
       [status, data_finalizacao, req.params.id, req.user.oficina_id]);
+
+    // Criar lançamento em Financeiro quando faturar
+    if (status === 'faturada' && ordem.valor_total > 0) {
+      await db.run(`
+        INSERT INTO lancamentos (oficina_id, tipo, descricao, categoria, valor, status, ordem_id)
+        VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        [req.user.oficina_id, 'receita', `Ordem ${ordem.numero}`, 'servico', ordem.valor_total, 'pendente', req.params.id]);
+    }
+
     res.json({ ok: true });
   } catch (err) {
     res.status(500).json({ error: err.message });

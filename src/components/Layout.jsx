@@ -2,30 +2,30 @@ import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
 const navItems = [
-  { to: '/alertas',   icon: 'fas fa-bell',           label: 'Alertas', badge: true },
-  { to: '/dashboard', icon: 'fas fa-chart-pie',      label: 'Dashboard' },
-  { to: '/ordens',    icon: 'fas fa-file-invoice',   label: 'Ordens de Serviço' },
-  { to: '/clientes',  icon: 'fas fa-users',           label: 'Clientes' },
-  { to: '/veiculos',    icon: 'fas fa-car',             label: 'Veículos' },
-  { to: '/estoque',     icon: 'fas fa-boxes',           label: 'Estoque' },
-  { to: '/financeiro',  icon: 'fas fa-dollar-sign',     label: 'Financeiro' },
-  { to: '/manutencao',  icon: 'fas fa-tools',           label: 'Manutenção Prev.' },
+  { to: '/app/alertas',   icon: 'fas fa-bell',           label: 'Alertas', badge: true },
+  { to: '/app/dashboard', icon: 'fas fa-chart-pie',      label: 'Dashboard' },
+  { to: '/app/ordens',    icon: 'fas fa-file-invoice',   label: 'Ordens de Serviço' },
+  { to: '/app/clientes',  icon: 'fas fa-users',           label: 'Clientes' },
+  { to: '/app/veiculos',    icon: 'fas fa-car',             label: 'Veículos' },
+  { to: '/app/estoque',     icon: 'fas fa-boxes',           label: 'Estoque' },
+  { to: '/app/financeiro',  icon: 'fas fa-dollar-sign',     label: 'Financeiro' },
+  { to: '/app/manutencao',  icon: 'fas fa-tools',           label: 'Manutenção Prev.' },
 ];
 
 const navFooterItems = [
-  { to: '/relatorios',       icon: 'fas fa-chart-bar',   label: 'Relatórios' },
-  { to: '/documentos',       icon: 'fas fa-file-export', label: 'Documentos' },
-  { to: '/usuarios',         icon: 'fas fa-users',       label: 'Usuários' },
-  { to: '/modelos-servicos', icon: 'fas fa-list',        label: 'Modelos' },
-  { to: '/integracao',       icon: 'fas fa-plug',        label: 'Integrações' },
-  { to: '/configuracoes',    icon: 'fas fa-cog',         label: 'Configurações' },
+  { to: '/app/relatorios',       icon: 'fas fa-chart-bar',   label: 'Relatórios' },
+  { to: '/app/documentos',       icon: 'fas fa-file-export', label: 'Documentos' },
+  { to: '/app/usuarios',         icon: 'fas fa-users',       label: 'Usuários' },
+  { to: '/app/modelos-servicos', icon: 'fas fa-list',        label: 'Modelos' },
+  { to: '/app/integracao',       icon: 'fas fa-plug',        label: 'Integrações' },
+  { to: '/app/configuracoes',    icon: 'fas fa-cog',         label: 'Configurações' },
 ];
 
 export default function Layout() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
 
-  const handleLogout = () => { logout(); navigate('/login'); };
+  const handleLogout = () => { logout(); navigate('/'); };
 
   const initials = user?.nome?.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase();
 

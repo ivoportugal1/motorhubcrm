@@ -37,11 +37,32 @@ exports.criar = async (req, res) => {
 
 exports.pagar = async (req, res) => {
   try {
+    const { oficina_id } = req.user;
     const data_pagamento = req.body.data_pagamento || new Date().toISOString().split('T')[0];
+
+    // Buscar lançamento para pegar o valor
+    const lancamento = await db.get('SELECT * FROM lancamentos WHERE id = ? AND oficina_id = ?', [req.params.id, oficina_id]);
+    if (!lancamento) return res.status(404).json({ error: 'Lançamento não encontrado' });
+
+    // Atualizar status do lançamento para pago
     await db.run(
       'UPDATE lancamentos SET status = ?, data_pagamento = ? WHERE id = ? AND oficina_id = ?',
-      ['pago', data_pagamento, req.params.id, req.user.oficina_id]
+      ['pago', data_pagamento, req.params.id, oficina_id]
     );
+
+    // Se for receita (entrada), criar movimento no caixa
+    if (lancamento.tipo === 'receita') {
+      // Buscar caixa aberto do dia
+      const caixa = await db.get('SELECT * FROM caixas WHERE oficina_id = ? AND status = ? AND date(data) = date(?)', [oficina_id, 'aberto', data_pagamento]);
+
+      if (caixa) {
+        await db.run(
+          'INSERT INTO caixa_movimentos (caixa_id, oficina_id, tipo, descricao, valor, forma_pagamento) VALUES (?, ?, ?, ?, ?, ?)',
+          [caixa.id, oficina_id, 'entrada', lancamento.descricao, lancamento.valor, 'dinheiro']
+        );
+      }
+    }
+
     res.json({ ok: true });
   } catch (err) { res.status(500).json({ error: err.message }); }
 };

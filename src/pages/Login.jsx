@@ -16,7 +16,7 @@ export default function Login() {
     setError(''); setLoading(true);
     try {
       await login(form.email, form.senha);
-      navigate('/dashboard');
+      navigate('/app/dashboard');
     } catch (err) {
       setError(err.response?.data?.error || 'Erro ao fazer login');
     } finally {

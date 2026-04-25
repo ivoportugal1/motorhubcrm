@@ -1,5 +1,7 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { NotificacaoProvider } from './contexts/NotificacaoContext';
+import NotificacaoToast from './components/NotificacaoToast';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
@@ -21,6 +23,7 @@ import ModelosServicos from './pages/ModelosServicos';
 import ClienteDetalhes from './pages/ClienteDetalhes';
 import Documentos from './pages/Documentos';
 import Integracao from './pages/Integracao';
+import Landing from './pages/Landing';
 import Layout from './components/Layout';
 
 function PrivateRoute({ children }) {
@@ -29,20 +32,28 @@ function PrivateRoute({ children }) {
   return user ? children : <Navigate to="/login" />;
 }
 
+function LandingOrDashboard() {
+  const { user, loading } = useAuth();
+  if (loading) return <div className="loading-screen"><i className="fas fa-spinner fa-spin"></i></div>;
+  return user ? <Navigate to="/app/dashboard" /> : <Landing />;
+}
+
 function PublicRoute({ children }) {
   const { user, loading } = useAuth();
   if (loading) return <div className="loading-screen"><i className="fas fa-spinner fa-spin"></i></div>;
-  return user ? <Navigate to="/dashboard" /> : children;
+  return user ? <Navigate to="/app/dashboard" /> : children;
 }
 
 export default function App() {
   return (
     <AuthProvider>
-      <Routes>
+      <NotificacaoProvider>
+        <NotificacaoToast />
+        <Routes>
+        <Route path="/" element={<LandingOrDashboard />} />
         <Route path="/login"    element={<PublicRoute><Login /></PublicRoute>} />
         <Route path="/register" element={<PublicRoute><Register /></PublicRoute>} />
-        <Route path="/" element={<PrivateRoute><Layout /></PrivateRoute>}>
-          <Route index element={<Navigate to="/dashboard" />} />
+        <Route path="/app" element={<PrivateRoute><Layout /></PrivateRoute>}>
           <Route path="dashboard" element={<Dashboard />} />
           <Route path="ordens"    element={<Ordens />} />
           <Route path="clientes"  element={<Clientes />} />
@@ -64,6 +75,7 @@ export default function App() {
           <Route path="integracao" element={<Integracao />} />
         </Route>
       </Routes>
+      </NotificacaoProvider>
     </AuthProvider>
   );
 }
