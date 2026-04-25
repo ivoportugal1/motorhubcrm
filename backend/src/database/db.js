@@ -4,26 +4,35 @@ const pool = new Pool({
   connectionString: process.env.DATABASE_URL || 'postgresql://localhost/motorhub'
 });
 
+// Convert ? placeholders to $1, $2, etc for PostgreSQL
+const convertSQL = (sql) => {
+  let counter = 1;
+  return sql.replace(/\?/g, () => `$${counter++}`);
+};
+
 // Promise wrapper
 const db = {
-  run: (sql, params = []) => new Promise((res, rej) =>
-    pool.query(sql, params, (err, result) => {
+  run: (sql, params = []) => new Promise((res, rej) => {
+    const converted = convertSQL(sql);
+    pool.query(converted, params, (err, result) => {
       if (err) rej(err);
       else res({ lastID: result.rows[0]?.id, changes: result.rowCount });
-    })
-  ),
-  get: (sql, params = []) => new Promise((res, rej) =>
-    pool.query(sql, params, (err, result) => {
+    });
+  }),
+  get: (sql, params = []) => new Promise((res, rej) => {
+    const converted = convertSQL(sql);
+    pool.query(converted, params, (err, result) => {
       if (err) rej(err);
       else res(result.rows[0]);
-    })
-  ),
-  all: (sql, params = []) => new Promise((res, rej) =>
-    pool.query(sql, params, (err, result) => {
+    });
+  }),
+  all: (sql, params = []) => new Promise((res, rej) => {
+    const converted = convertSQL(sql);
+    pool.query(converted, params, (err, result) => {
       if (err) rej(err);
       else res(result.rows);
-    })
-  ),
+    });
+  }),
 };
 
 const init = async () => {
