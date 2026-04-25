@@ -28,7 +28,8 @@ exports.register = async (req, res) => {
     const user = await db.get('SELECT * FROM usuarios WHERE id = ?', [usuario.lastID]);
     res.status(201).json({ token: makeToken(user), user: { id: user.id, nome: user.nome, email: user.email, role: user.role, oficina_id: user.oficina_id } });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error('REGISTER ERROR:', err);
+    res.status(500).json({ error: err.message || 'Erro desconhecido', detail: err.toString(), code: err.code });
   }
 };
 
