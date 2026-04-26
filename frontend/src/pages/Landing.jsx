@@ -1,12 +1,23 @@
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 export default function Landing() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [faqOpen, setFaqOpen] = useState(null);
   const [contato, setContato] = useState({ nome: '', email: '', telefone: '' });
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  const [isExtraSmall, setIsExtraSmall] = useState(window.innerWidth <= 480);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 768);
+      setIsExtraSmall(window.innerWidth <= 480);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   if (user) {
     navigate('/app/dashboard');
@@ -91,6 +102,47 @@ export default function Landing() {
           opacity: 1;
           animation: shimmer 0.6s;
         }
+
+        /* Responsiveness */
+        @media (max-width: 768px) {
+          /* Grid responsiveness */
+          .benefits-grid { grid-template-columns: 1fr !important; gap: 16px !important; }
+          .features-grid { grid-template-columns: 1fr !important; gap: 24px !important; }
+          .pricing-grid { grid-template-columns: 1fr !important; gap: 20px !important; }
+          .footer-grid { grid-template-columns: 1fr !important; gap: 20px !important; text-align: center !important; }
+
+          /* Header */
+          header { padding: 12px 16px !important; }
+          header nav { display: none !important; }
+          header div:first-child { font-size: 1.2rem !important; }
+          header button { padding: 6px 12px !important; font-size: 0.8rem !important; }
+
+          /* Hero section */
+          #inicio { padding: 60px 16px !important; min-height: 450px !important; }
+          #inicio h1 { font-size: 2rem !important; line-height: 1.3 !important; margin-bottom: 16px !important; }
+          #inicio > div > p { font-size: 1rem !important; margin-bottom: 30px !important; }
+
+          /* Contact */
+          #contato { padding: 60px 16px !important; }
+          #contato h2 { font-size: 1.8rem !important; }
+
+          /* Footer */
+          footer { padding: 40px 16px 30px !important; }
+          .footer-grid a { display: block; margin: 8px 0; }
+        }
+
+        @media (max-width: 480px) {
+          /* Extra small devices */
+          header { padding: 10px 12px !important; }
+          header div:first-child { font-size: 1rem !important; }
+          header button { padding: 6px 10px !important; font-size: 0.75rem !important; }
+
+          /* Hero */
+          #inicio { padding: 40px 12px !important; min-height: 350px !important; }
+          #inicio h1 { font-size: 1.5rem !important; margin-bottom: 12px !important; }
+          #inicio > div > p { font-size: 0.9rem !important; margin-bottom: 20px !important; }
+          #inicio button { padding: 10px 20px !important; font-size: 0.85rem !important; }
+        }
       `}</style>
 
       {/* HEADER FIXO */}
@@ -150,38 +202,60 @@ export default function Landing() {
 
       {/* HERO */}
       <section id="inicio" style={{
-        padding: '100px 24px',
+        padding: isMobile ? (isExtraSmall ? '40px 12px' : '60px 16px') : '100px 24px',
         textAlign: 'center',
         background: 'linear-gradient(135deg, var(--dark) 0%, var(--dark2) 100%)',
-        minHeight: '600px',
+        minHeight: isMobile ? (isExtraSmall ? '350px' : '450px') : '600px',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center'
       }}>
         <div style={{ maxWidth: 900, animation: 'fadeInUp 0.8s ease-out' }}>
-          <h1 style={{ fontSize: '4rem', fontWeight: 800, marginBottom: 20, lineHeight: 1.2 }}>
+          <h1 style={{
+            fontSize: isExtraSmall ? '1.5rem' : isMobile ? '2rem' : '4rem',
+            fontWeight: 800,
+            marginBottom: isExtraSmall ? 12 : isMobile ? 16 : 20,
+            lineHeight: 1.2
+          }}>
             Facilite a rotina do seu negócio
           </h1>
-          <p style={{ fontSize: '1.3rem', color: 'var(--muted)', marginBottom: 40 }}>
+          <p style={{
+            fontSize: isExtraSmall ? '0.9rem' : isMobile ? '1rem' : '1.3rem',
+            color: 'var(--muted)',
+            marginBottom: isExtraSmall ? 20 : isMobile ? 30 : 40
+          }}>
             Sistema para Gestão de Oficinas Mecânicas - Controle total em um só lugar
           </p>
 
-          <div style={{ display: 'flex', gap: 16, justifyContent: 'center', marginBottom: 60 }}>
+          <div style={{
+            display: 'flex',
+            flexDirection: isMobile ? 'column' : 'row',
+            gap: isMobile ? 12 : 16,
+            justifyContent: 'center',
+            marginBottom: isExtraSmall ? 20 : isMobile ? 30 : 60
+          }}>
             <button onClick={() => navigate('/register')}
-              style={{ background: 'var(--red)', color: 'white', border: 'none', padding: '16px 40px', borderRadius: 10, fontWeight: 700, cursor: 'pointer', fontSize: '1rem', transition: 'all .3s', animation: 'bounce 2s infinite' }}
+              style={{ background: 'var(--red)', color: 'white', border: 'none', padding: isExtraSmall ? '10px 20px' : isMobile ? '12px 24px' : '16px 40px', borderRadius: 10, fontWeight: 700, cursor: 'pointer', fontSize: isExtraSmall ? '0.85rem' : isMobile ? '0.9rem' : '1rem', transition: 'all .3s', animation: 'bounce 2s infinite' }}
               onMouseEnter={e => { e.target.style.transform = 'translateY(-5px) scale(1.05)'; e.target.style.boxShadow = '0 15px 40px rgba(230, 57, 70, 0.5)'; }}
               onMouseLeave={e => { e.target.style.transform = 'translateY(0) scale(1)'; e.target.style.boxShadow = 'none'; }}>
               Teste Grátis por 30 Dias
             </button>
             <button onClick={() => document.getElementById('contato').scrollIntoView()}
-              style={{ background: 'transparent', color: 'var(--red)', border: '2px solid var(--red)', padding: '14px 38px', borderRadius: 10, fontWeight: 700, cursor: 'pointer', fontSize: '1rem', transition: 'all .3s' }}
+              style={{ background: 'transparent', color: 'var(--red)', border: '2px solid var(--red)', padding: isExtraSmall ? '10px 20px' : isMobile ? '12px 24px' : '14px 38px', borderRadius: 10, fontWeight: 700, cursor: 'pointer', fontSize: isExtraSmall ? '0.85rem' : isMobile ? '0.9rem' : '1rem', transition: 'all .3s' }}
               onMouseEnter={e => { e.target.style.background = 'var(--red)'; e.target.style.color = 'white'; e.target.style.transform = 'scale(1.05)'; }}
               onMouseLeave={e => { e.target.style.background = 'transparent'; e.target.style.color = 'var(--red)'; e.target.style.transform = 'scale(1)'; }}>
               Pedir Demonstração
             </button>
           </div>
 
-          <div style={{ display: 'flex', justifyContent: 'center', gap: 30, fontSize: '0.9rem', color: 'var(--muted)' }}>
+          <div style={{
+            display: isMobile ? 'flex' : 'flex',
+            flexDirection: isMobile ? 'column' : 'row',
+            justifyContent: 'center',
+            gap: isMobile ? 12 : 30,
+            fontSize: isExtraSmall ? '0.75rem' : isMobile ? '0.8rem' : '0.9rem',
+            color: 'var(--muted)'
+          }}>
             <span>✓ Teste gratuito - sem cartão de crédito</span>
             <span>✓ Setup em minutos</span>
             <span>✓ Suporte 24/7</span>
@@ -190,13 +264,13 @@ export default function Landing() {
       </section>
 
 {/* BENEFÍCIOS */}
-      <section style={{ padding: '80px 24px', background: 'var(--dark)' }}>
+      <section style={{ padding: isMobile ? '60px 16px' : '80px 24px', background: 'var(--dark)' }}>
         <div style={{ maxWidth: 1200, margin: '0 auto' }}>
-          <h2 style={{ fontSize: '2.5rem', fontWeight: 700, textAlign: 'center', marginBottom: 60 }}>
+          <h2 style={{ fontSize: isMobile ? '1.8rem' : '2.5rem', fontWeight: 700, textAlign: 'center', marginBottom: isMobile ? 40 : 60 }}>
             Por que escolher MotorHub?
           </h2>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 24 }}>
+          <div className="benefits-grid" style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)', gap: isMobile ? 16 : 24 }}>
             {[
               { icon: '🌐', titulo: 'Acesso Onde Quiser', descricao: 'Desktop, tablet ou smartphone - mesma experiência' },
               { icon: '❌', titulo: 'Sem Multa', descricao: 'Cancele quando quiser, sem penalidades' },
@@ -237,10 +311,10 @@ export default function Landing() {
       </section>
 
       {/* FEATURES TEMÁTICAS */}
-      <section style={{ padding: '80px 24px', background: 'var(--dark2)', borderTop: '1px solid var(--border)' }}>
+      <section style={{ padding: isMobile ? '60px 16px' : '80px 24px', background: 'var(--dark2)', borderTop: '1px solid var(--border)' }}>
         <div style={{ maxWidth: 1200, margin: '0 auto' }}>
           {/* Ordens de Serviço */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 60, alignItems: 'center', marginBottom: 100 }}>
+          <div className="features-grid" style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: isMobile ? 24 : 60, alignItems: 'center', marginBottom: isMobile ? 60 : 100 }}>
             <div>
               <h2 style={{ fontSize: '2rem', fontWeight: 700, marginBottom: 16 }}>
                 📋 Ordens de Serviço Simplificadas
@@ -262,7 +336,7 @@ export default function Landing() {
           </div>
 
           {/* Gestão Financeira */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 60, alignItems: 'center', marginBottom: 100 }}>
+          <div className="features-grid" style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: isMobile ? 24 : 60, alignItems: 'center', marginBottom: isMobile ? 60 : 100 }}>
             <div style={{ background: 'var(--dark)', borderRadius: 12, padding: 40, textAlign: 'center', minHeight: 300, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <div style={{ fontSize: '4rem', opacity: 0.5 }}>💰</div>
             </div>
@@ -284,7 +358,7 @@ export default function Landing() {
           </div>
 
           {/* Operacional */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 60, alignItems: 'center' }}>
+          <div className="features-grid" style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: isMobile ? 24 : 60, alignItems: 'center' }}>
             <div>
               <h2 style={{ fontSize: '2rem', fontWeight: 700, marginBottom: 16 }}>
                 🔧 Controle Operacional
@@ -309,16 +383,16 @@ export default function Landing() {
 
       {/* PLANOS */}
       <section id="planos" style={{
-        padding: '80px 24px',
+        padding: isMobile ? '60px 16px' : '80px 24px',
         background: 'var(--dark)',
         borderTop: '1px solid var(--border)'
       }}>
         <div style={{ maxWidth: 1200, margin: '0 auto' }}>
-          <h2 style={{ fontSize: '2.5rem', fontWeight: 700, textAlign: 'center', marginBottom: 60 }}>
+          <h2 style={{ fontSize: isMobile ? '1.8rem' : '2.5rem', fontWeight: 700, textAlign: 'center', marginBottom: isMobile ? 40 : 60 }}>
             Planos que Crescem com Você
           </h2>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 40, maxWidth: 900, margin: '0 auto' }}>
+          <div className="pricing-grid" style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)', gap: isMobile ? 20 : 40, maxWidth: 900, margin: '0 auto' }}>
             {[
               {
                 nome: 'Acelera',
@@ -519,12 +593,12 @@ export default function Landing() {
 
       {/* CONTATO */}
       <section id="contato" style={{
-        padding: '80px 24px',
+        padding: isMobile ? '60px 16px' : '80px 24px',
         background: 'var(--dark)',
         borderTop: '1px solid var(--border)'
       }}>
         <div style={{ maxWidth: 600, margin: '0 auto' }}>
-          <h2 style={{ fontSize: '2.5rem', fontWeight: 700, textAlign: 'center', marginBottom: 16 }}>
+          <h2 style={{ fontSize: isMobile ? '1.8rem' : '2.5rem', fontWeight: 700, textAlign: 'center', marginBottom: 16 }}>
             Pronto para crescer?
           </h2>
           <p style={{ textAlign: 'center', color: 'var(--muted)', fontSize: '1.1rem', marginBottom: 50 }}>
@@ -633,7 +707,7 @@ export default function Landing() {
 
       {/* FOOTER */}
       <footer style={{
-        padding: '60px 24px 40px',
+        padding: isMobile ? '40px 16px 30px' : '60px 24px 40px',
         background: 'var(--dark2)',
         borderTop: '1px solid var(--border)',
         textAlign: 'center',
@@ -641,7 +715,7 @@ export default function Landing() {
         fontSize: '0.9rem'
       }}>
         <div style={{ maxWidth: 1200, margin: '0 auto', marginBottom: 40 }}>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 40, marginBottom: 40, textAlign: 'left' }}>
+          <div className="footer-grid" style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)', gap: isMobile ? 20 : 40, marginBottom: 40, textAlign: isMobile ? 'center' : 'left' }}>
             <div>
               <h4 style={{ color: 'var(--white)', fontWeight: 700, marginBottom: 12 }}>Produto</h4>
               <ul style={{ listStyle: 'none', padding: 0 }}>
