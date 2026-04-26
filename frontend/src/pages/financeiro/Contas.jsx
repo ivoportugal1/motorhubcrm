@@ -14,7 +14,7 @@ const fmtDate = (d) => {
   }
 };
 const today = () => new Date().toISOString().split('T')[0];
-const emptyForm = { tipo: 'receita', descricao: '', categoria: '', valor: '', data_vencimento: today(), status: 'pendente' };
+const emptyForm = { tipo: 'receita', descricao: '', categoria: '', tipo_despesa: '', usuario_id: '', valor: '', data_vencimento: today(), status: 'pendente' };
 
 const abas = [
   { key: 'todos', label: 'Todos' },
@@ -26,6 +26,7 @@ export default function Contas() {
   const navigate = useNavigate();
   const [lancamentos, setLancamentos] = useState([]);
   const [resumo, setResumo] = useState(null);
+  const [usuarios, setUsuarios] = useState([]);
   const [aba, setAba] = useState('todos');
   const [statusFiltro, setStatusFiltro] = useState('');
   const [busca, setBusca] = useState('');
@@ -38,15 +39,16 @@ export default function Contas() {
     const params = { busca };
     if (aba !== 'todos') params.tipo = aba;
     if (statusFiltro) params.status = statusFiltro;
-    const [l, r] = await Promise.all([api.get('/financeiro', { params }), api.get('/financeiro/resumo')]);
+    const [l, r, u] = await Promise.all([api.get('/financeiro', { params }), api.get('/financeiro/resumo'), api.get('/usuarios')]);
     setLancamentos(l.data);
     setResumo(r.data);
+    setUsuarios(u.data || []);
   };
 
   useEffect(() => { load(); }, [aba, statusFiltro, busca]);
 
   const openNovo = () => { setForm(emptyForm); setEditando(null); setModal(true); };
-  const openEditar = (l) => { setForm({ tipo: l.tipo, descricao: l.descricao, categoria: l.categoria || '', valor: l.valor, data_vencimento: l.data_vencimento || today(), status: l.status }); setEditando(l.id); setModal(true); };
+  const openEditar = (l) => { setForm({ tipo: l.tipo, descricao: l.descricao, categoria: l.categoria || '', tipo_despesa: l.tipo_despesa || '', usuario_id: l.usuario_id || '', valor: l.valor, data_vencimento: l.data_vencimento || today(), status: l.status }); setEditando(l.id); setModal(true); };
   const handle = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 
   const save = async (e) => {
@@ -83,6 +85,7 @@ export default function Contas() {
         <select value={statusFiltro} onChange={e => setStatusFiltro(e.target.value)}>
           <option value="">Todos os status</option>
           <option value="pendente">Pendente</option>
+          <option value="atrasado">Atrasado</option>
           <option value="pago">Pago</option>
           <option value="cancelado">Cancelado</option>
         </select>
@@ -108,7 +111,7 @@ export default function Contas() {
                       <td style={{ color: l.tipo === 'receita' ? 'var(--green)' : 'var(--red)', fontWeight: 600 }}>{fmt(l.valor)}</td>
                       <td>{fmtDate(l.data_vencimento)}</td>
                       <td>{fmtDate(l.data_pagamento)}</td>
-                      <td><span className={`badge badge-${l.status === 'pago' ? 'finalizada' : l.status === 'cancelado' ? 'cancelada' : 'orcamento'}`}>{l.status === 'pago' ? 'Pago' : l.status === 'cancelado' ? 'Cancelado' : 'Pendente'}</span></td>
+                      <td><span className={`badge badge-${l.status === 'pago' ? 'finalizada' : l.status === 'cancelado' ? 'cancelada' : l.status === 'atrasado' ? 'cancelada' : 'orcamento'}`} style={l.status === 'atrasado' ? { background: 'rgba(230,57,70,0.2)', color: 'var(--red)', border: '1px solid var(--red)' } : {}}>{l.status === 'pago' ? 'Pago' : l.status === 'cancelado' ? 'Cancelado' : l.status === 'atrasado' ? '⚠️ Atrasado' : 'Pendente'}</span></td>
                       <td style={{ display: 'flex', gap: 6 }}>
                         {l.status === 'pendente' && <button className="btn btn-outline btn-sm" title="Pagar" onClick={() => pagar(l.id)}><i className="fas fa-check"></i></button>}
                         <button className="btn btn-ghost btn-sm" onClick={() => openEditar(l)}><i className="fas fa-edit"></i></button>
@@ -131,12 +134,37 @@ export default function Contas() {
               <div className="modal-body">
                 <div className="form-row">
                   <div className="form-group"><label>Tipo *</label><select name="tipo" value={form.tipo} onChange={handle}><option value="receita">Receita</option><option value="despesa">Despesa</option></select></div>
-                  <div className="form-group"><label>Status</label><select name="status" value={form.status} onChange={handle}><option value="pendente">Pendente</option><option value="pago">Pago</option><option value="cancelado">Cancelado</option></select></div>
+                  <div className="form-group"><label>Status</label><select name="status" value={form.status} onChange={handle}><option value="pendente">Pendente</option><option value="atrasado">Atrasado</option><option value="pago">Pago</option><option value="cancelado">Cancelado</option></select></div>
                 </div>
-                <div className="form-group"><label>Descrição *</label><input name="descricao" placeholder="Ex: Pagamento OS #1027" value={form.descricao} onChange={handle} required /></div>
+
+                {form.tipo === 'despesa' && (
+                  <div className="form-group">
+                    <label>Tipo de Despesa</label>
+                    <select name="tipo_despesa" value={form.tipo_despesa} onChange={handle}>
+                      <option value="">Selecionar tipo...</option>
+                      <option value="operacional">Operacional</option>
+                      <option value="funcionario">Pagamento de Funcionário</option>
+                      <option value="outras">Outras</option>
+                    </select>
+                  </div>
+                )}
+
+                {form.tipo === 'despesa' && form.tipo_despesa === 'funcionario' && (
+                  <div className="form-group">
+                    <label>Funcionário *</label>
+                    <select name="usuario_id" value={form.usuario_id} onChange={handle} required>
+                      <option value="">Selecionar funcionário...</option>
+                      {usuarios.map(u => <option key={u.id} value={u.id}>{u.nome}</option>)}
+                    </select>
+                  </div>
+                )}
+
+                <div className="form-group"><label>Descrição *</label><input name="descricao" placeholder={form.tipo === 'despesa' && form.tipo_despesa === 'funcionario' ? 'Ex: Salário, Adiantamento...' : 'Ex: Pagamento OS #1027'} value={form.descricao} onChange={handle} required /></div>
                 <div className="form-row">
-                  <div className="form-group"><label>Categoria</label><input name="categoria" placeholder="Ex: Serviços, Peças..." value={form.categoria} onChange={handle} /></div>
-                  <div className="form-group"><label>Valor *</label><input name="valor" type="number" step="0.01" placeholder="0,00" value={form.valor} onChange={handle} required /></div>
+                  {!(form.tipo === 'despesa' && form.tipo_despesa === 'funcionario') && (
+                    <div className="form-group"><label>Categoria</label><input name="categoria" placeholder="Ex: Serviços, Peças..." value={form.categoria} onChange={handle} /></div>
+                  )}
+                  <div className="form-group" style={{ flex: form.tipo === 'despesa' && form.tipo_despesa === 'funcionario' ? '1' : undefined }}><label>Valor *</label><input name="valor" type="number" step="0.01" placeholder="0,00" value={form.valor} onChange={handle} required /></div>
                 </div>
                 <div className="form-group"><label>Data de vencimento</label><input name="data_vencimento" type="date" value={form.data_vencimento} onChange={handle} /></div>
               </div>

@@ -23,12 +23,12 @@ exports.listar = async (req, res) => {
 
 exports.criar = async (req, res) => {
   try {
-    const { tipo, descricao, categoria, valor, data_vencimento, status, ordem_id } = req.body;
+    const { tipo, descricao, categoria, valor, data_vencimento, status, ordem_id, tipo_despesa, usuario_id } = req.body;
     if (!descricao || !valor) return res.status(422).json({ error: 'Descrição e valor são obrigatórios' });
 
     const r = await db.run(
-      'INSERT INTO lancamentos (oficina_id, tipo, descricao, categoria, valor, data_vencimento, status, ordem_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-      [req.user.oficina_id, tipo || 'receita', descricao, categoria || '', valor, data_vencimento || null, status || 'pendente', ordem_id || null]
+      'INSERT INTO lancamentos (oficina_id, tipo, descricao, categoria, valor, data_vencimento, status, ordem_id, tipo_despesa, usuario_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      [req.user.oficina_id, tipo || 'receita', descricao, categoria || '', valor, data_vencimento || null, status || 'pendente', ordem_id || null, tipo_despesa || null, usuario_id || null]
     );
     const lancamento = await db.get('SELECT * FROM lancamentos WHERE id = ?', [r.lastID]);
     res.status(201).json(lancamento);
@@ -69,10 +69,10 @@ exports.pagar = async (req, res) => {
 
 exports.atualizar = async (req, res) => {
   try {
-    const { tipo, descricao, categoria, valor, data_vencimento, status } = req.body;
+    const { tipo, descricao, categoria, valor, data_vencimento, status, tipo_despesa, usuario_id } = req.body;
     await db.run(
-      'UPDATE lancamentos SET tipo=?, descricao=?, categoria=?, valor=?, data_vencimento=?, status=? WHERE id=? AND oficina_id=?',
-      [tipo, descricao, categoria || '', valor, data_vencimento || null, status, req.params.id, req.user.oficina_id]
+      'UPDATE lancamentos SET tipo=?, descricao=?, categoria=?, valor=?, data_vencimento=?, status=?, tipo_despesa=?, usuario_id=? WHERE id=? AND oficina_id=?',
+      [tipo, descricao, categoria || '', valor, data_vencimento || null, status, tipo_despesa || null, usuario_id || null, req.params.id, req.user.oficina_id]
     );
     res.json({ ok: true });
   } catch (err) { res.status(500).json({ error: err.message }); }
@@ -88,6 +88,13 @@ exports.deletar = async (req, res) => {
 exports.resumo = async (req, res) => {
   try {
     const { oficina_id } = req.user;
+
+    // Atualizar automaticamente lançamentos vencidos para "atrasado"
+    const hoje = new Date().toISOString().split('T')[0];
+    await db.run(
+      "UPDATE lancamentos SET status='atrasado' WHERE oficina_id=? AND status='pendente' AND data_vencimento < ? AND tipo='despesa'",
+      [oficina_id, hoje]
+    ).catch(() => null); // Ignorar erro se coluna status não tiver valor 'atrasado' yet
 
     const [receitas_mes, despesas_mes, a_receber, a_pagar, ultimos] = await Promise.all([
       db.get("SELECT COALESCE(SUM(valor),0) as total FROM lancamentos WHERE oficina_id=? AND tipo='receita' AND status='pago' AND to_char(data_pagamento, 'YYYY-MM')=to_char(now(), 'YYYY-MM')", [oficina_id]),

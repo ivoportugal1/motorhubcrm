@@ -180,9 +180,12 @@ const init = async () => {
       data_vencimento DATE,
       data_pagamento DATE,
       status TEXT NOT NULL DEFAULT 'pendente',
+      tipo_despesa TEXT,
+      usuario_id INTEGER,
       ordem_id INTEGER,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (oficina_id) REFERENCES oficinas(id),
+      FOREIGN KEY (usuario_id) REFERENCES usuarios(id),
       FOREIGN KEY (ordem_id) REFERENCES ordens(id)
     );
   `).catch(e => console.error("DB init:", e.message));
@@ -288,6 +291,8 @@ const init = async () => {
 
   // ALTER TABLE to add missing columns (idempotent)
   await db.run(`ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS ativo INTEGER DEFAULT 1`).catch(e => console.error("Alter usuarios:", e.message));
+  await db.run(`ALTER TABLE lancamentos ADD COLUMN IF NOT EXISTS tipo_despesa TEXT`).catch(e => console.error("Alter lancamentos tipo_despesa:", e.message));
+  await db.run(`ALTER TABLE lancamentos ADD COLUMN IF NOT EXISTS usuario_id INTEGER`).catch(e => console.error("Alter lancamentos usuario_id:", e.message));
 };
 
 init().catch(console.error);
