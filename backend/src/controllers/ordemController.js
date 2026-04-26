@@ -125,7 +125,10 @@ exports.atualizar = async (req, res) => {
 exports.dashboard = async (req, res) => {
   try {
     const { oficina_id } = req.user;
-    const [abertas, receita, despesa, veiculos, clientes, ultimas] = await Promise.all([
+    const hoje = new Date().toISOString().split('T')[0];
+    const proximosDias = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+
+    const [abertas, receita, despesa, veiculos, clientes, ultimas, pagamentosPendentes] = await Promise.all([
       db.get("SELECT COUNT(*) as total FROM ordens WHERE oficina_id=? AND status IN ('orcamento','andamento','pre_orcamento')", [oficina_id]),
       db.get("SELECT COUNT(*) as total, SUM(valor_total) as valor FROM ordens WHERE oficina_id=? AND to_char(data_abertura, 'YYYY-MM')=to_char(now(), 'YYYY-MM')", [oficina_id]),
       db.get("SELECT COALESCE(SUM(valor), 0) as valor FROM lancamentos WHERE oficina_id=? AND tipo='despesa' AND (data_pagamento IS NULL OR to_char(data_pagamento, 'YYYY-MM')=to_char(now(), 'YYYY-MM'))", [oficina_id]),
@@ -136,6 +139,12 @@ exports.dashboard = async (req, res) => {
               LEFT JOIN clientes c ON c.id=o.cliente_id
               LEFT JOIN veiculos v ON v.id=o.veiculo_id
               WHERE o.oficina_id=? ORDER BY o.data_abertura DESC LIMIT 5`, [oficina_id]),
+      db.all(`SELECT l.id, l.descricao, l.valor, l.data_vencimento, u.nome as funcionario_nome
+              FROM lancamentos l
+              LEFT JOIN usuarios u ON u.id=l.usuario_id
+              WHERE l.oficina_id=? AND l.tipo='despesa' AND l.tipo_despesa='funcionario' AND l.status='pendente'
+              AND l.data_vencimento >= ? AND l.data_vencimento <= ?
+              ORDER BY l.data_vencimento ASC`, [oficina_id, hoje, proximosDias]),
     ]);
 
     const receita_mes = receita.valor || 0;
@@ -151,6 +160,7 @@ exports.dashboard = async (req, res) => {
       total_veiculos: veiculos.total,
       total_clientes: clientes.total,
       ultimas_ordens: ultimas,
+      pagamentos_proximos: pagamentosPendentes || [],
     });
   } catch (err) {
     res.status(500).json({ error: err.message });

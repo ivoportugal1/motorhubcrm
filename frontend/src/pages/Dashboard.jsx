@@ -48,6 +48,21 @@ export default function Dashboard() {
       });
     }
 
+    // Alertas de pagamentos próximos
+    if (data.pagamentos_proximos && data.pagamentos_proximos.length > 0) {
+      data.pagamentos_proximos.forEach((pag, idx) => {
+        const dataVencimento = new Date(pag.data_vencimento + 'T00:00:00').toLocaleDateString('pt-BR');
+        novasNotificacoes.push({
+          id: `pagamento_${pag.id}`,
+          tipo: 'warning',
+          icon: 'fas fa-calendar-check',
+          titulo: `Pagamento próximo: ${pag.funcionario_nome || 'Funcionário'}`,
+          mensagem: `Vencimento: ${dataVencimento} • ${fmt(pag.valor)}`,
+          cor: 'var(--yellow)'
+        });
+      });
+    }
+
     setNotificacoes(novasNotificacoes);
   }, [data]);
 

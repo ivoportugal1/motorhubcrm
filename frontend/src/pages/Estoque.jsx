@@ -3,10 +3,15 @@ import api from '../services/api';
 
 const fmt = (v) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v || 0);
 const empty = { codigo: '', nome: '', descricao: '', categoria: '', fabricante: '', unidade: 'un', estoque_atual: '', estoque_minimo: '', valor_custo: '', valor_venda: '' };
+const dataHoje = () => new Date().toISOString().split('T')[0];
+const data30DiasAtras = () => new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
 
 export default function Estoque() {
   const [pecas, setPecas] = useState([]);
+  const [produtosMaisVendidos, setProdutosMaisVendidos] = useState([]);
   const [busca, setBusca] = useState('');
+  const [dataInicio, setDataInicio] = useState(data30DiasAtras());
+  const [dataFim, setDataFim] = useState(dataHoje());
   const [modal, setModal] = useState(false);
   const [modalEstoque, setModalEstoque] = useState(null);
   const [editando, setEditando] = useState(null);
@@ -19,7 +24,17 @@ export default function Estoque() {
     setPecas(data);
   };
 
+  const loadProdutosMaisVendidos = async () => {
+    try {
+      const { data } = await api.get('/pecas/produtos-vendidos', { params: { data_inicio: dataInicio, data_fim: dataFim } });
+      setProdutosMaisVendidos(data || []);
+    } catch (err) {
+      console.error('Erro ao carregar produtos mais vendidos:', err);
+    }
+  };
+
   useEffect(() => { load(); }, [busca]);
+  useEffect(() => { loadProdutosMaisVendidos(); }, [dataInicio, dataFim]);
 
   const openNovo = () => { setForm(empty); setEditando(null); setModal(true); };
   const openEditar = (p) => {
@@ -63,6 +78,64 @@ export default function Estoque() {
 
       <div className="filters">
         <input placeholder="Buscar por nome, código ou fabricante..." value={busca} onChange={e => setBusca(e.target.value)} />
+      </div>
+
+      {/* Gráfico de Produtos Mais Vendidos */}
+      <div className="card" style={{ marginBottom: 24 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+          <h3 className="card-title">
+            <i className="fas fa-chart-bar" style={{ marginRight: 8, color: 'var(--blue)' }}></i>
+            Produtos Mais Vendidos
+          </h3>
+          <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+              <label style={{ fontSize: '0.85rem', color: 'var(--muted)' }}>De:</label>
+              <input type="date" value={dataInicio} onChange={e => setDataInicio(e.target.value)} style={{ padding: '6px 8px', borderRadius: 4, background: 'var(--dark2)', border: '1px solid var(--border)', color: 'var(--white)', fontSize: '0.85rem' }} />
+            </div>
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+              <label style={{ fontSize: '0.85rem', color: 'var(--muted)' }}>Até:</label>
+              <input type="date" value={dataFim} onChange={e => setDataFim(e.target.value)} style={{ padding: '6px 8px', borderRadius: 4, background: 'var(--dark2)', border: '1px solid var(--border)', color: 'var(--white)', fontSize: '0.85rem' }} />
+            </div>
+          </div>
+        </div>
+
+        {produtosMaisVendidos.length === 0 ? (
+          <p style={{ color: 'var(--muted)', fontSize: '0.88rem' }}>Nenhuma venda registrada neste período.</p>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            {produtosMaisVendidos.slice(0, 5).map((produto, idx) => {
+              const maxVendas = produtosMaisVendidos[0]?.quantidade_vendida || 1;
+              const percentual = (produto.quantidade_vendida / maxVendas) * 100;
+              return (
+                <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                  <div style={{ minWidth: 200, flex: '0 0 200px' }}>
+                    <div style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--white)', marginBottom: 4 }}>
+                      #{idx + 1} {produto.nome}
+                    </div>
+                    <div style={{ fontSize: '0.8rem', color: 'var(--muted)' }}>
+                      {produto.quantidade_vendida} un vendidas
+                    </div>
+                  </div>
+                  <div style={{ flex: 1, height: 24, background: 'rgba(46,196,182,0.15)', borderRadius: 4, overflow: 'hidden', position: 'relative' }}>
+                    <div style={{
+                      height: '100%',
+                      width: `${percentual}%`,
+                      background: 'linear-gradient(90deg, var(--green), #27ae60)',
+                      borderRadius: 4,
+                      transition: 'width 0.3s ease'
+                    }}></div>
+                  </div>
+                  <div style={{ minWidth: 80, textAlign: 'right' }}>
+                    <div style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--green)' }}>
+                      {fmt(produto.total_vendido)}
+                    </div>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--muted)' }}>faturado</div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       <div className="card">

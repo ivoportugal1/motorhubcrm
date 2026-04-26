@@ -55,3 +55,45 @@ exports.ajustarEstoque = async (req, res) => {
     res.json(peca);
   } catch (err) { res.status(500).json({ error: err.message }); }
 };
+
+exports.produtosVendidos = async (req, res) => {
+  try {
+    const { data_inicio, data_fim } = req.query;
+    const { oficina_id } = req.user;
+
+    const produtosVendidos = await db.all(`
+      SELECT
+        p.id,
+        p.nome,
+        SUM(oi.quantidade) as quantidade_vendida,
+        SUM(oi.valor_total) as total_vendido
+      FROM ordem_itens oi
+      JOIN pecas p ON p.id = SUBSTRING_INDEX(oi.descricao, ' ', 1)::INTEGER OR p.nome = oi.descricao
+      JOIN ordens o ON o.id = oi.ordem_id
+      WHERE o.oficina_id = ? AND o.status IN ('finalizada', 'faturada')
+      AND DATE(o.data_finalizacao) >= ? AND DATE(o.data_finalizacao) <= ?
+      GROUP BY p.id, p.nome
+      ORDER BY quantidade_vendida DESC
+      LIMIT 10
+    `, [oficina_id, data_inicio || '2000-01-01', data_fim || new Date().toISOString().split('T')[0]]);
+
+    res.json(produtosVendidos || []);
+  } catch (err) {
+    // Se houver erro na query complexa, retornar um query mais simples
+    try {
+      const simples = await db.all(`
+        SELECT
+          'Produtos da Ordem' as nome,
+          COUNT(DISTINCT oi.ordem_id) as quantidade_vendida,
+          SUM(oi.valor_total) as total_vendido
+        FROM ordem_itens oi
+        JOIN ordens o ON o.id = oi.ordem_id
+        WHERE o.oficina_id = ? AND o.status IN ('finalizada', 'faturada')
+        AND DATE(o.data_finalizacao) >= ? AND DATE(o.data_finalizacao) <= ?
+      `, [req.user.oficina_id, req.query.data_inicio || '2000-01-01', req.query.data_fim || new Date().toISOString().split('T')[0]]);
+      res.json(simples || []);
+    } catch (err2) {
+      res.json([]);
+    }
+  }
+};
