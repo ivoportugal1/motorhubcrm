@@ -101,7 +101,7 @@ export default function Dashboard() {
       )}
 
       {/* GRID DE KPIs */}
-      <div className="stats-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 20 }}>
+      <div className="stats-grid">
         {/* OS Abertas */}
         <div className="stat-card" style={{
           background: 'var(--dark2)',
@@ -176,7 +176,7 @@ export default function Dashboard() {
       </div>
 
       {/* GRÁFICOS */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 20, marginBottom: 20 }}>
+      <div className="dashboard-grid">
         {/* GRÁFICO DE RECEITA */}
         <div className="card">
           <h3 className="card-title">
@@ -227,7 +227,7 @@ export default function Dashboard() {
             <i className="fas fa-chart-pie" style={{ marginRight: 8, color: 'var(--yellow)' }}></i>
             Status das OS
           </h3>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 40, marginTop: 20, minHeight: 200 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 20, marginTop: 20, minHeight: 'auto' }}>
             {/* GRÁFICO PIZZA */}
             <svg width="150" height="150" viewBox="0 0 150 150" style={{ transform: 'rotate(-90deg)' }}>
               <circle cx="75" cy="75" r="60" fill="var(--dark)" strokeWidth="0" />
@@ -295,7 +295,7 @@ export default function Dashboard() {
       </div>
 
       {/* GRID SECUNDÁRIO */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 20, marginBottom: 20 }}>
+      <div className="dashboard-grid">
         {/* ÚLTIMAS ORDENS */}
         <div className="card">
           <h3 className="card-title">
