@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
@@ -26,14 +27,44 @@ export default function Layout() {
   const { user, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const handleLogout = () => { logout(); navigate('/'); };
 
   const initials = user?.nome?.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase();
 
+  // Close sidebar when clicking on a nav item
+  const closeSidebar = () => setSidebarOpen(false);
+
   return (
     <div className="layout">
-      <aside className="sidebar">
+      {sidebarOpen && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(0,0,0,.5)',
+            zIndex: 99,
+            display: 'none'
+          }}
+          className="sidebar-overlay"
+          onClick={() => setSidebarOpen(false)}
+          style={{
+            display: window.innerWidth <= 768 ? 'block' : 'none',
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(0,0,0,.5)',
+            zIndex: 99
+          }}
+        />
+      )}
+      <aside className={`sidebar ${sidebarOpen ? 'open' : ''}`}>
         <div className="sidebar-logo">Motor<span>Hub</span></div>
         <div className="sidebar-oficina">
           <small>Oficina</small>
@@ -45,13 +76,23 @@ export default function Layout() {
         <nav className="sidebar-nav">
           <div className="nav-section">Menu</div>
           {navItems.map(item => (
-            <NavLink key={item.to} to={item.to} className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}>
+            <NavLink
+              key={item.to}
+              to={item.to}
+              onClick={closeSidebar}
+              className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}
+            >
               <i className={item.icon}></i> {item.label}
             </NavLink>
           ))}
           <div className="nav-section">Sistema</div>
           {navFooterItems.map(item => (
-            <NavLink key={item.to} to={item.to} className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}>
+            <NavLink
+              key={item.to}
+              to={item.to}
+              onClick={closeSidebar}
+              className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}
+            >
               <i className={item.icon}></i> {item.label}
             </NavLink>
           ))}
@@ -75,6 +116,14 @@ export default function Layout() {
       </aside>
       <div className="main">
         <div className="topbar">
+          <button
+            className="btn btn-ghost btn-sm"
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            style={{ display: 'none' }}
+            className="menu-toggle"
+          >
+            <i className={`fas fa-${sidebarOpen ? 'times' : 'bars'}`}></i>
+          </button>
           <span className="topbar-title">MotorHub</span>
         </div>
         <div className="page-content">
