@@ -1,5 +1,6 @@
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { useTheme } from '../contexts/ThemeContext';
 
 const navItems = [
   { to: '/app/alertas',   icon: 'fas fa-bell',           label: 'Alertas', badge: true },
@@ -23,6 +24,7 @@ const navFooterItems = [
 
 export default function Layout() {
   const { user, logout } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
 
   const handleLogout = () => { logout(); navigate('/'); };
@@ -62,7 +64,11 @@ export default function Layout() {
               <div className="user-role">{user?.role}</div>
             </div>
           </div>
-          <button className="btn btn-ghost btn-block btn-sm" onClick={handleLogout}>
+          <button className="theme-toggle" onClick={toggleTheme} title="Alternar tema">
+            <i className={`fas fa-${theme === 'dark' ? 'sun' : 'moon'}`}></i>
+            {theme === 'dark' ? 'Modo Claro' : 'Modo Escuro'}
+          </button>
+          <button className="btn btn-ghost btn-block btn-sm" onClick={handleLogout} style={{ marginTop: 8 }}>
             <i className="fas fa-sign-out-alt"></i> Sair
           </button>
         </div>
