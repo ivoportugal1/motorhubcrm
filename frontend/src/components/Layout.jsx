@@ -40,16 +40,6 @@ export default function Layout() {
     <div className="layout">
       {sidebarOpen && (
         <div
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            background: 'rgba(0,0,0,.5)',
-            zIndex: 99,
-            display: 'none'
-          }}
           className="sidebar-overlay"
           onClick={() => setSidebarOpen(false)}
           style={{
@@ -117,10 +107,8 @@ export default function Layout() {
       <div className="main">
         <div className="topbar">
           <button
-            className="btn btn-ghost btn-sm"
+            className="btn btn-ghost btn-sm menu-toggle"
             onClick={() => setSidebarOpen(!sidebarOpen)}
-            style={{ display: 'none' }}
-            className="menu-toggle"
           >
             <i className={`fas fa-${sidebarOpen ? 'times' : 'bars'}`}></i>
           </button>
