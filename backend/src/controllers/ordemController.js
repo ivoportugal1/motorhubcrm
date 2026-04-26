@@ -125,9 +125,10 @@ exports.atualizar = async (req, res) => {
 exports.dashboard = async (req, res) => {
   try {
     const { oficina_id } = req.user;
-    const [abertas, mes, veiculos, clientes, ultimas] = await Promise.all([
+    const [abertas, receita, despesa, veiculos, clientes, ultimas] = await Promise.all([
       db.get("SELECT COUNT(*) as total FROM ordens WHERE oficina_id=? AND status IN ('orcamento','andamento','pre_orcamento')", [oficina_id]),
-      db.get("SELECT COUNT(*) as total, SUM(valor_total) as receita FROM ordens WHERE oficina_id=? AND to_char(data_abertura, 'YYYY-MM')=to_char(now(), 'YYYY-MM')", [oficina_id]),
+      db.get("SELECT COUNT(*) as total, SUM(valor_total) as valor FROM ordens WHERE oficina_id=? AND to_char(data_abertura, 'YYYY-MM')=to_char(now(), 'YYYY-MM')", [oficina_id]),
+      db.get("SELECT COALESCE(SUM(valor), 0) as valor FROM lancamentos WHERE oficina_id=? AND tipo='despesa' AND (data_pagamento IS NULL OR to_char(data_pagamento, 'YYYY-MM')=to_char(now(), 'YYYY-MM'))", [oficina_id]),
       db.get('SELECT COUNT(*) as total FROM veiculos WHERE oficina_id=? AND ativo=1', [oficina_id]),
       db.get('SELECT COUNT(*) as total FROM clientes WHERE oficina_id=?', [oficina_id]),
       db.all(`SELECT o.numero, o.status, o.valor_total, o.data_abertura, c.nome as cliente_nome, v.placa
@@ -136,10 +137,17 @@ exports.dashboard = async (req, res) => {
               LEFT JOIN veiculos v ON v.id=o.veiculo_id
               WHERE o.oficina_id=? ORDER BY o.data_abertura DESC LIMIT 5`, [oficina_id]),
     ]);
+
+    const receita_mes = receita.valor || 0;
+    const despesa_mes = despesa.valor || 0;
+    const lucro_mes = receita_mes - despesa_mes;
+
     res.json({
       ordens_abertas: abertas.total,
-      ordens_mes: mes.total,
-      receita_mes: mes.receita || 0,
+      ordens_mes: receita.total,
+      receita_mes: receita_mes,
+      despesa_mes: despesa_mes,
+      lucro_mes: lucro_mes,
       total_veiculos: veiculos.total,
       total_clientes: clientes.total,
       ultimas_ordens: ultimas,

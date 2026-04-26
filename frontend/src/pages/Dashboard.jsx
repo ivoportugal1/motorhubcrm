@@ -157,6 +157,40 @@ export default function Dashboard() {
           </div>
         </div>
 
+        {/* Despesas */}
+        <div className="stat-card" style={{
+          background: 'var(--dark2)',
+          border: '1px solid var(--border)',
+          borderRadius: 12,
+          padding: 20
+        }}>
+          <div style={{ fontSize: '0.75rem', color: 'var(--muted)', marginBottom: 8 }}>DESPESAS DO MÊS</div>
+          <div style={{ fontSize: '1.8rem', fontWeight: 800, color: 'var(--red)', marginBottom: 4 }}>
+            {fmt(data.despesa_mes)}
+          </div>
+          <div style={{ fontSize: '0.85rem', color: 'var(--muted)' }}>
+            <i className="fas fa-arrow-down" style={{ color: 'var(--red)', marginRight: 4 }}></i>
+            Custos e despesas
+          </div>
+        </div>
+
+        {/* Lucro Líquido */}
+        <div className="stat-card" style={{
+          background: 'var(--dark2)',
+          border: `1px solid ${data.lucro_mes >= 0 ? 'var(--green)' : 'var(--red)'}`,
+          borderRadius: 12,
+          padding: 20
+        }}>
+          <div style={{ fontSize: '0.75rem', color: 'var(--muted)', marginBottom: 8 }}>LUCRO LÍQUIDO</div>
+          <div style={{ fontSize: '1.8rem', fontWeight: 800, color: data.lucro_mes >= 0 ? 'var(--green)' : 'var(--red)', marginBottom: 4 }}>
+            {fmt(data.lucro_mes)}
+          </div>
+          <div style={{ fontSize: '0.85rem', color: 'var(--muted)' }}>
+            <i className={`fas fa-${data.lucro_mes >= 0 ? 'chart-line' : 'exclamation-triangle'}`} style={{ color: data.lucro_mes >= 0 ? 'var(--green)' : 'var(--red)', marginRight: 4 }}></i>
+            Receita menos despesas
+          </div>
+        </div>
+
         {/* Veículos */}
         <div className="stat-card" style={{
           background: 'var(--dark2)',
@@ -361,11 +395,31 @@ export default function Dashboard() {
 
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: 12, borderBottom: '1px solid var(--border)' }}>
               <div style={{ color: 'var(--muted)' }}>
-                <i className="fas fa-dollar-sign" style={{ color: 'var(--red)', marginRight: 8 }}></i>
+                <i className="fas fa-dollar-sign" style={{ color: 'var(--green)', marginRight: 8 }}></i>
                 Receita do Mês
               </div>
-              <div style={{ fontSize: '1.4rem', fontWeight: 700, color: 'var(--red)' }}>
+              <div style={{ fontSize: '1.4rem', fontWeight: 700, color: 'var(--green)' }}>
                 {fmt(data.receita_mes)}
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: 12, borderBottom: '1px solid var(--border)' }}>
+              <div style={{ color: 'var(--muted)' }}>
+                <i className="fas fa-money-bill-wave" style={{ color: 'var(--red)', marginRight: 8 }}></i>
+                Despesas do Mês
+              </div>
+              <div style={{ fontSize: '1.4rem', fontWeight: 700, color: 'var(--red)' }}>
+                {fmt(data.despesa_mes)}
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: 12, borderBottom: '1px solid var(--border)' }}>
+              <div style={{ color: 'var(--muted)' }}>
+                <i className="fas fa-chart-line" style={{ color: data.lucro_mes >= 0 ? 'var(--green)' : 'var(--red)', marginRight: 8 }}></i>
+                Lucro Líquido
+              </div>
+              <div style={{ fontSize: '1.4rem', fontWeight: 700, color: data.lucro_mes >= 0 ? 'var(--green)' : 'var(--red)' }}>
+                {fmt(data.lucro_mes)}
               </div>
             </div>
 
