@@ -5,6 +5,16 @@ import api from '../../services/api';
 const fmt = (v) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v || 0);
 const today = () => new Date().toISOString().split('T')[0];
 const emptyMov = { tipo: 'entrada', descricao: '', valor: '', forma_pagamento: 'dinheiro' };
+const formatData = (dateStr) => {
+  if (!dateStr) return 'N/A';
+  try {
+    const date = new Date(dateStr + 'T00:00:00');
+    if (isNaN(date.getTime())) return 'N/A';
+    return date.toLocaleDateString('pt-BR');
+  } catch {
+    return 'N/A';
+  }
+};
 
 export default function Caixa() {
   const navigate = useNavigate();
@@ -118,7 +128,7 @@ export default function Caixa() {
               <tbody>
                 {historico.map(h => (
                   <tr key={h.id}>
-                    <td>{new Date(h.data + 'T00:00:00').toLocaleDateString('pt-BR')}</td>
+                    <td>{formatData(h.data)}</td>
                     <td><span className={`badge ${h.status === 'aberto' ? 'badge-andamento' : 'badge-finalizada'}`}>{h.status === 'aberto' ? 'Aberto' : 'Fechado'}</span></td>
                     <td>{fmt(h.saldo_inicial)}</td>
                     <td>{h.saldo_final != null ? fmt(h.saldo_final) : '—'}</td>

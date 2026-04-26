@@ -3,7 +3,16 @@ import { useNavigate } from 'react-router-dom';
 import api from '../../services/api';
 
 const fmt = (v) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v || 0);
-const fmtDate = (d) => d ? new Date(d + 'T00:00:00').toLocaleDateString('pt-BR') : '—';
+const fmtDate = (d) => {
+  if (!d) return '—';
+  try {
+    const date = new Date(d + 'T00:00:00');
+    if (isNaN(date.getTime())) return '—';
+    return date.toLocaleDateString('pt-BR');
+  } catch {
+    return '—';
+  }
+};
 const today = () => new Date().toISOString().split('T')[0];
 const emptyForm = { tipo: 'receita', descricao: '', categoria: '', valor: '', data_vencimento: today(), status: 'pendente' };
 

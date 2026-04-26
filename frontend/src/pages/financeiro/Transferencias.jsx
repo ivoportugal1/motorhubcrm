@@ -4,6 +4,16 @@ import api from '../../services/api';
 
 const fmt = (v) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v || 0);
 const today = () => new Date().toISOString().split('T')[0];
+const formatData = (dateStr) => {
+  if (!dateStr) return '—';
+  try {
+    const date = new Date(dateStr + 'T00:00:00');
+    if (isNaN(date.getTime())) return '—';
+    return date.toLocaleDateString('pt-BR');
+  } catch {
+    return '—';
+  }
+};
 const emptyForm = { descricao: '', valor: '', conta_origem: '', conta_destino: '', data: today() };
 
 export default function Transferencias() {
@@ -49,7 +59,7 @@ export default function Transferencias() {
                 <tbody>
                   {transferencias.map(t => (
                     <tr key={t.id}>
-                      <td>{new Date(t.data + 'T00:00:00').toLocaleDateString('pt-BR')}</td>
+                      <td>{formatData(t.data)}</td>
                       <td><strong>{t.descricao}</strong></td>
                       <td>{t.conta_origem || '—'}</td>
                       <td>{t.conta_destino || '—'}</td>
