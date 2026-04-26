@@ -25,11 +25,11 @@ export default function Configuracoes() {
   const [modalUsuario, setModalUsuario] = useState(false);
   const [formUsuario, setFormUsuario] = useState({ nome: '', email: '', role: 'mecanico', senha: '' });
   const [savingUsuario, setSavingUsuario] = useState(false);
-  const [unidades, setUnidades] = useState([
-    { id: 1, nome: 'Oficina Principal', endereco: 'Rua Principal, 100', cidade: 'São Paulo', uf: 'SP' }
-  ]);
+  const [unidades, setUnidades] = useState([]);
   const [modalUnidade, setModalUnidade] = useState(false);
   const [formUnidade, setFormUnidade] = useState({ nome: '', endereco: '', cidade: '', uf: '' });
+  const [savingUnidade, setSavingUnidade] = useState(false);
+  const [editandoUnidade, setEditandoUnidade] = useState(null);
 
   useEffect(() => {
     const carregar = async () => {
@@ -40,7 +40,16 @@ export default function Configuracoes() {
         console.error(err);
       }
     };
+    const carregarUnidades = async () => {
+      try {
+        const { data } = await api.get('/unidades');
+        setUnidades(data);
+      } catch (err) {
+        console.error('Erro ao carregar unidades:', err);
+      }
+    };
     carregar();
+    carregarUnidades();
   }, []);
 
   const handle = (e) => setConfig({ ...config, [e.target.name]: e.target.value });
@@ -97,14 +106,51 @@ export default function Configuracoes() {
 
   const salvarUnidade = async (e) => {
     e.preventDefault();
+    if (!formUnidade.nome) {
+      alert('Nome é obrigatório');
+      return;
+    }
+    setSavingUnidade(true);
     try {
-      setUnidades([...unidades, { id: unidades.length + 1, ...formUnidade }]);
+      if (editandoUnidade) {
+        await api.put(`/unidades/${editandoUnidade}`, formUnidade);
+      } else {
+        await api.post('/unidades', formUnidade);
+      }
+      const { data } = await api.get('/unidades');
+      setUnidades(data);
       setFormUnidade({ nome: '', endereco: '', cidade: '', uf: '' });
       setModalUnidade(false);
-      alert('Unidade adicionada com sucesso!');
+      setEditandoUnidade(null);
+      alert(editandoUnidade ? 'Unidade atualizada!' : 'Unidade criada!');
     } catch (err) {
-      alert('Erro ao adicionar unidade');
+      alert(err.response?.data?.error || 'Erro ao salvar unidade');
+    } finally {
+      setSavingUnidade(false);
     }
+  };
+
+  const deletarUnidade = async (id) => {
+    if (!confirm('Deletar esta unidade?')) return;
+    try {
+      await api.delete(`/unidades/${id}`);
+      setUnidades(unidades.filter(u => u.id !== id));
+      alert('Unidade deletada!');
+    } catch (err) {
+      alert(err.response?.data?.error || 'Erro ao deletar unidade');
+    }
+  };
+
+  const editarUnidade = (u) => {
+    setFormUnidade({ nome: u.nome, endereco: u.endereco, cidade: u.cidade, uf: u.uf });
+    setEditandoUnidade(u.id);
+    setModalUnidade(true);
+  };
+
+  const novaUnidade = () => {
+    setFormUnidade({ nome: '', endereco: '', cidade: '', uf: '' });
+    setEditandoUnidade(null);
+    setModalUnidade(true);
   };
 
   const tabs = [
@@ -324,7 +370,7 @@ export default function Configuracoes() {
             <h3 style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--white)' }}>Unidades/Filiais</h3>
             <button
               className="btn btn-primary btn-sm"
-              onClick={() => setModalUnidade(true)}
+              onClick={novaUnidade}
             >
               <i className="fas fa-plus"></i> Nova Unidade
             </button>
@@ -363,8 +409,8 @@ export default function Configuracoes() {
                     </div>
                   </div>
                   <div style={{ display: 'flex', gap: 6 }}>
-                    <button className="btn btn-ghost btn-sm"><i className="fas fa-edit"></i></button>
-                    <button className="btn btn-danger btn-sm"><i className="fas fa-trash"></i></button>
+                    <button className="btn btn-ghost btn-sm" onClick={() => editarUnidade(u)}><i className="fas fa-edit"></i></button>
+                    <button className="btn btn-danger btn-sm" onClick={() => deletarUnidade(u.id)}><i className="fas fa-trash"></i></button>
                   </div>
                 </div>
               ))}
@@ -478,12 +524,12 @@ export default function Configuracoes() {
         </div>
       )}
 
-      {/* MODAL NOVA UNIDADE */}
+      {/* MODAL NOVA/EDITAR UNIDADE */}
       {modalUnidade && (
         <div className="modal-overlay" onClick={e => e.target === e.currentTarget && setModalUnidade(false)}>
           <div className="modal">
             <div className="modal-header">
-              <h3>Nova Unidade/Filial</h3>
+              <h3>{editandoUnidade ? 'Editar Unidade' : 'Nova Unidade/Filial'}</h3>
               <button className="btn btn-ghost btn-sm" onClick={() => setModalUnidade(false)}><i className="fas fa-times"></i></button>
             </div>
             <form onSubmit={salvarUnidade}>
@@ -532,8 +578,8 @@ export default function Configuracoes() {
               </div>
               <div className="modal-footer">
                 <button type="button" className="btn btn-ghost" onClick={() => setModalUnidade(false)}>Cancelar</button>
-                <button type="submit" className="btn btn-primary">
-                  Adicionar Unidade
+                <button type="submit" className="btn btn-primary" disabled={savingUnidade}>
+                  {savingUnidade ? <><i className="fas fa-spinner fa-spin"></i></> : editandoUnidade ? 'Atualizar' : 'Adicionar'}
                 </button>
               </div>
             </form>

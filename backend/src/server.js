@@ -24,6 +24,7 @@ app.use('/api/modelos-servicos', require('./routes/modelosServicos'));
 app.use('/api/clientes',         require('./routes/clienteDetalhes'));
 app.use('/api/documentos',       require('./routes/documentos'));
 app.use('/api/integracao',       require('./routes/integracao'));
+app.use('/api/unidades',         require('./routes/unidades'));
 
 app.get('/api/health', (_, res) => res.json({ ok: true }));
 
