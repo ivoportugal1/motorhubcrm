@@ -20,15 +20,18 @@ exports.getUsuarios = async (req, res) => {
 
 exports.createUsuario = async (req, res) => {
   const { oficina_id } = req.user;
-  const { nome, email, role = 'mecanico', ativo = 1 } = req.body;
+  const { nome, email, role = 'mecanico', senha, ativo = 1 } = req.body;
 
-  if (!nome || !email) {
-    return res.status(400).json({ error: 'Nome e e-mail são obrigatórios' });
+  if (!nome || !email || !senha) {
+    return res.status(400).json({ error: 'Nome, e-mail e senha são obrigatórios' });
+  }
+
+  if (senha.length < 6) {
+    return res.status(400).json({ error: 'A senha deve ter pelo menos 6 caracteres' });
   }
 
   try {
-    const senhaTemp = Math.random().toString(36).slice(-8);
-    const senhaHash = await bcrypt.hash(senhaTemp, 10);
+    const senhaHash = await bcrypt.hash(senha, 10);
 
     await db.run(
       `INSERT INTO usuarios (oficina_id, nome, email, senha, role, ativo) VALUES (?, ?, ?, ?, ?, ?)`,
@@ -36,8 +39,7 @@ exports.createUsuario = async (req, res) => {
     );
 
     res.json({
-      message: 'Usuário criado com sucesso',
-      senha_temporaria: senhaTemp // Em produção, enviar por e-mail
+      message: 'Usuário criado com sucesso'
     });
   } catch (err) {
     console.error(err);

@@ -23,7 +23,7 @@ export default function Configuracoes() {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [modalUsuario, setModalUsuario] = useState(false);
-  const [formUsuario, setFormUsuario] = useState({ nome: '', email: '', role: 'mecanico' });
+  const [formUsuario, setFormUsuario] = useState({ nome: '', email: '', role: 'mecanico', senha: '' });
   const [savingUsuario, setSavingUsuario] = useState(false);
   const [unidades, setUnidades] = useState([
     { id: 1, nome: 'Oficina Principal', endereco: 'Rua Principal, 100', cidade: 'São Paulo', uf: 'SP' }
@@ -78,10 +78,14 @@ export default function Configuracoes() {
 
   const salvarUsuario = async (e) => {
     e.preventDefault();
+    if (!formUsuario.senha || formUsuario.senha.length < 6) {
+      alert('A senha deve ter pelo menos 6 caracteres');
+      return;
+    }
     setSavingUsuario(true);
     try {
       await api.post('/usuarios', formUsuario);
-      setFormUsuario({ nome: '', email: '', role: 'mecanico' });
+      setFormUsuario({ nome: '', email: '', role: 'mecanico', senha: '' });
       setModalUsuario(false);
       alert('Usuário criado com sucesso!');
     } catch (err) {
@@ -430,15 +434,37 @@ export default function Configuracoes() {
                     onChange={e => setFormUsuario({ ...formUsuario, role: e.target.value })}
                     required
                   >
-                    <option value="recepcionista">📞 Recepcionista</option>
-                    <option value="mecanico">🔧 Mecânico</option>
-                    <option value="gerente">📊 Gerente</option>
-                    <option value="admin">👑 Administrador</option>
+                    {user?.role === 'admin' ? (
+                      <>
+                        <option value="recepcionista">📞 Recepcionista</option>
+                        <option value="mecanico">🔧 Mecânico</option>
+                        <option value="gerente">📊 Gerente</option>
+                        <option value="admin">👑 Administrador</option>
+                      </>
+                    ) : (
+                      <>
+                        <option value="recepcionista">📞 Recepcionista</option>
+                        <option value="mecanico">🔧 Mecânico</option>
+                        <option value="gerente">📊 Gerente</option>
+                      </>
+                    )}
                   </select>
                 </div>
 
-                <div style={{ background: 'rgba(100,149,237,.1)', border: '1px solid rgba(100,149,237,.3)', color: '#6495ed', borderRadius: 8, padding: 12, fontSize: '0.85rem' }}>
-                  <i className="fas fa-info-circle"></i> Uma senha temporária será enviada por e-mail
+                <div className="form-group">
+                  <label>Senha *</label>
+                  <input
+                    type="password"
+                    placeholder="Mínimo 6 caracteres"
+                    value={formUsuario.senha}
+                    onChange={e => setFormUsuario({ ...formUsuario, senha: e.target.value })}
+                    required
+                    minLength="6"
+                  />
+                </div>
+
+                <div style={{ background: 'rgba(46,196,182,.1)', border: '1px solid rgba(46,196,182,.3)', color: '#2ec4b6', borderRadius: 8, padding: 12, fontSize: '0.85rem' }}>
+                  <i className="fas fa-lock"></i> A senha será definida agora pelo administrador
                 </div>
               </div>
               <div className="modal-footer">
