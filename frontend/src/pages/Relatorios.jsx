@@ -54,7 +54,7 @@ export default function Relatorios() {
           <i className="fas fa-spinner fa-spin" style={{ fontSize: '2rem' }}></i>
         </div>
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 20 }}>
+        <div className="dashboard-grid">
           {/* FINANCEIRO */}
           <div className="card">
             <h3 className="card-title"><i className="fas fa-chart-line" style={{ marginRight: 8, color: 'var(--green)' }}></i>Desempenho Financeiro</h3>

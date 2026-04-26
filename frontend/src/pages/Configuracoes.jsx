@@ -26,6 +26,7 @@ export default function Configuracoes() {
   const [formUsuario, setFormUsuario] = useState({ nome: '', email: '', role: 'mecanico', senha: '' });
   const [savingUsuario, setSavingUsuario] = useState(false);
   const [unidades, setUnidades] = useState([]);
+  const [usuarios, setUsuarios] = useState([]);
   const [modalUnidade, setModalUnidade] = useState(false);
   const [formUnidade, setFormUnidade] = useState({ nome: '', endereco: '', cidade: '', uf: '' });
   const [savingUnidade, setSavingUnidade] = useState(false);
@@ -48,8 +49,17 @@ export default function Configuracoes() {
         console.error('Erro ao carregar unidades:', err);
       }
     };
+    const carregarUsuarios = async () => {
+      try {
+        const { data } = await api.get('/usuarios');
+        setUsuarios(data);
+      } catch (err) {
+        console.error('Erro ao carregar usuários:', err);
+      }
+    };
     carregar();
     carregarUnidades();
+    carregarUsuarios();
   }, []);
 
   const handle = (e) => setConfig({ ...config, [e.target.name]: e.target.value });
@@ -138,6 +148,17 @@ export default function Configuracoes() {
       alert('Unidade deletada!');
     } catch (err) {
       alert(err.response?.data?.error || 'Erro ao deletar unidade');
+    }
+  };
+
+  const deletarUsuario = async (id) => {
+    if (!confirm('Deletar este usuário?')) return;
+    try {
+      await api.delete(`/usuarios/${id}`);
+      setUsuarios(usuarios.filter(u => u.id !== id));
+      alert('Usuário deletado!');
+    } catch (err) {
+      alert(err.response?.data?.error || 'Erro ao deletar usuário');
     }
   };
 
@@ -431,11 +452,47 @@ export default function Configuracoes() {
               <i className="fas fa-plus"></i> Novo Usuário
             </button>
           </div>
-          <div style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--muted)' }}>
-            <i className="fas fa-users" style={{ fontSize: '2rem', marginBottom: 12, opacity: 0.5 }}></i>
-            <p style={{ marginBottom: 8 }}>Gerencie usuários do sistema</p>
-            <p style={{ fontSize: '0.85rem' }}>Clique em "Novo Usuário" para criar uma conta ou vá para a página de Usuários para ver todos</p>
-          </div>
+
+          {usuarios.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--muted)' }}>
+              <i className="fas fa-users" style={{ fontSize: '2rem', marginBottom: 12, opacity: 0.5 }}></i>
+              <p style={{ marginBottom: 8 }}>Nenhum usuário cadastrado</p>
+              <p style={{ fontSize: '0.85rem' }}>Clique em "Novo Usuário" para criar uma conta</p>
+            </div>
+          ) : (
+            <div style={{ display: 'grid', gap: 12 }}>
+              {usuarios.map(u => (
+                <div
+                  key={u.id}
+                  style={{
+                    background: 'var(--dark3)',
+                    border: '1px solid var(--border)',
+                    borderRadius: 8,
+                    padding: 16,
+                    display: 'grid',
+                    gridTemplateColumns: '1fr auto',
+                    gap: 16,
+                    alignItems: 'start'
+                  }}
+                >
+                  <div>
+                    <div style={{ fontWeight: 600, color: 'var(--white)', marginBottom: 8 }}>{u.nome}</div>
+                    <div style={{ fontSize: '0.85rem', color: 'var(--muted)', marginBottom: 4 }}>
+                      <i className="fas fa-envelope" style={{ marginRight: 6 }}></i>
+                      {u.email}
+                    </div>
+                    <div style={{ fontSize: '0.85rem', color: 'var(--muted)' }}>
+                      <i className="fas fa-briefcase" style={{ marginRight: 6 }}></i>
+                      {u.role}
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', gap: 6 }}>
+                    <button className="btn btn-danger btn-sm" onClick={() => deletarUsuario(u.id)}><i className="fas fa-trash"></i></button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 

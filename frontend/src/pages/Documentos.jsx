@@ -81,7 +81,7 @@ export default function Documentos() {
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
+      <div className="dashboard-grid">
         {/* ORÇAMENTOS */}
         <div className="card">
           <h3 className="card-title"><i className="fas fa-file-pdf" style={{ marginRight: 8, color: '#e74c3c' }}></i>Orçamentos em PDF</h3>
