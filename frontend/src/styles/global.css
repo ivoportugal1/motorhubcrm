@@ -378,8 +378,8 @@ tbody td { padding: 11px 14px; font-size: 0.85rem; }
   .status-tab { padding: 4px 10px; font-size: 0.75rem; }
 
   /* DASHBOARD RESPONSIVO */
-  .stats-grid { grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
-  .dashboard-grid { grid-template-columns: 1fr; gap: 12px; margin-bottom: 16px; }
+  .stats-grid { grid-template-columns: 1fr; gap: 10px; margin-bottom: 12px; }
+  .dashboard-grid { grid-template-columns: 1fr; gap: 12px; margin-bottom: 12px; }
 
   /* SVG responsivo */
   svg { max-width: 100%; height: auto; }
