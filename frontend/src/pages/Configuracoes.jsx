@@ -22,6 +22,14 @@ export default function Configuracoes() {
   });
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [modalUsuario, setModalUsuario] = useState(false);
+  const [formUsuario, setFormUsuario] = useState({ nome: '', email: '', role: 'mecanico' });
+  const [savingUsuario, setSavingUsuario] = useState(false);
+  const [unidades, setUnidades] = useState([
+    { id: 1, nome: 'Oficina Principal', endereco: 'Rua Principal, 100', cidade: 'São Paulo', uf: 'SP' }
+  ]);
+  const [modalUnidade, setModalUnidade] = useState(false);
+  const [formUnidade, setFormUnidade] = useState({ nome: '', endereco: '', cidade: '', uf: '' });
 
   useEffect(() => {
     const carregar = async () => {
@@ -67,6 +75,33 @@ export default function Configuracoes() {
   };
 
   const currentThemeMode = localStorage.getItem('theme-mode') || theme;
+
+  const salvarUsuario = async (e) => {
+    e.preventDefault();
+    setSavingUsuario(true);
+    try {
+      await api.post('/usuarios', formUsuario);
+      setFormUsuario({ nome: '', email: '', role: 'mecanico' });
+      setModalUsuario(false);
+      alert('Usuário criado com sucesso!');
+    } catch (err) {
+      alert(err.response?.data?.error || 'Erro ao criar usuário');
+    } finally {
+      setSavingUsuario(false);
+    }
+  };
+
+  const salvarUnidade = async (e) => {
+    e.preventDefault();
+    try {
+      setUnidades([...unidades, { id: unidades.length + 1, ...formUnidade }]);
+      setFormUnidade({ nome: '', endereco: '', cidade: '', uf: '' });
+      setModalUnidade(false);
+      alert('Unidade adicionada com sucesso!');
+    } catch (err) {
+      alert('Erro ao adicionar unidade');
+    }
+  };
 
   const tabs = [
     { id: 'perfil', label: 'Perfil', icon: 'fas fa-user' },
@@ -281,11 +316,56 @@ export default function Configuracoes() {
       {/* UNIDADES TAB */}
       {tab === 'unidades' && (
         <div className="card" style={{ maxWidth: 800 }}>
-          <div style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--muted)' }}>
-            <i className="fas fa-map-marker-alt" style={{ fontSize: '2rem', marginBottom: 12, opacity: 0.5 }}></i>
-            <p style={{ marginBottom: 8 }}>Gerenciamento de unidades</p>
-            <p style={{ fontSize: '0.85rem' }}>Configure múltiplas unidades/filiais da sua oficina</p>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+            <h3 style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--white)' }}>Unidades/Filiais</h3>
+            <button
+              className="btn btn-primary btn-sm"
+              onClick={() => setModalUnidade(true)}
+            >
+              <i className="fas fa-plus"></i> Nova Unidade
+            </button>
           </div>
+
+          {unidades.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--muted)' }}>
+              <i className="fas fa-map-marker-alt" style={{ fontSize: '2rem', marginBottom: 12, opacity: 0.5 }}></i>
+              <p style={{ marginBottom: 8 }}>Nenhuma unidade cadastrada</p>
+              <p style={{ fontSize: '0.85rem' }}>Clique em "Nova Unidade" para adicionar uma filial</p>
+            </div>
+          ) : (
+            <div style={{ display: 'grid', gap: 12 }}>
+              {unidades.map(u => (
+                <div
+                  key={u.id}
+                  style={{
+                    background: 'var(--dark3)',
+                    border: '1px solid var(--border)',
+                    borderRadius: 8,
+                    padding: 16,
+                    display: 'grid',
+                    gridTemplateColumns: '1fr auto',
+                    gap: 16,
+                    alignItems: 'start'
+                  }}
+                >
+                  <div>
+                    <div style={{ fontWeight: 600, color: 'var(--white)', marginBottom: 8 }}>{u.nome}</div>
+                    <div style={{ fontSize: '0.85rem', color: 'var(--muted)', marginBottom: 4 }}>
+                      <i className="fas fa-map-marker-alt" style={{ marginRight: 6 }}></i>
+                      {u.endereco}
+                    </div>
+                    <div style={{ fontSize: '0.85rem', color: 'var(--muted)' }}>
+                      {u.cidade}, {u.uf}
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', gap: 6 }}>
+                    <button className="btn btn-ghost btn-sm"><i className="fas fa-edit"></i></button>
+                    <button className="btn btn-danger btn-sm"><i className="fas fa-trash"></i></button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
@@ -294,12 +374,143 @@ export default function Configuracoes() {
         <div className="card" style={{ maxWidth: 800 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
             <h3 style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--white)' }}>Usuários da Oficina</h3>
-            <button className="btn btn-primary btn-sm"><i className="fas fa-plus"></i> Novo Usuário</button>
+            <button
+              className="btn btn-primary btn-sm"
+              onClick={() => setModalUsuario(true)}
+            >
+              <i className="fas fa-plus"></i> Novo Usuário
+            </button>
           </div>
           <div style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--muted)' }}>
             <i className="fas fa-users" style={{ fontSize: '2rem', marginBottom: 12, opacity: 0.5 }}></i>
             <p style={{ marginBottom: 8 }}>Gerencie usuários do sistema</p>
-            <p style={{ fontSize: '0.85rem' }}>Vá para a página de Usuários para adicionar, editar ou remover usuários</p>
+            <p style={{ fontSize: '0.85rem' }}>Clique em "Novo Usuário" para criar uma conta ou vá para a página de Usuários para ver todos</p>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL NOVO USUÁRIO */}
+      {modalUsuario && (
+        <div className="modal-overlay" onClick={e => e.target === e.currentTarget && setModalUsuario(false)}>
+          <div className="modal">
+            <div className="modal-header">
+              <h3>Novo Usuário</h3>
+              <button className="btn btn-ghost btn-sm" onClick={() => setModalUsuario(false)}><i className="fas fa-times"></i></button>
+            </div>
+            <form onSubmit={salvarUsuario}>
+              <div className="modal-body">
+                <div className="form-group">
+                  <label>Nome *</label>
+                  <input
+                    name="nome"
+                    placeholder="Nome completo"
+                    value={formUsuario.nome}
+                    onChange={e => setFormUsuario({ ...formUsuario, nome: e.target.value })}
+                    required
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>E-mail *</label>
+                  <input
+                    name="email"
+                    type="email"
+                    placeholder="usuario@email.com"
+                    value={formUsuario.email}
+                    onChange={e => setFormUsuario({ ...formUsuario, email: e.target.value })}
+                    required
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>Função *</label>
+                  <select
+                    name="role"
+                    value={formUsuario.role}
+                    onChange={e => setFormUsuario({ ...formUsuario, role: e.target.value })}
+                    required
+                  >
+                    <option value="recepcionista">📞 Recepcionista</option>
+                    <option value="mecanico">🔧 Mecânico</option>
+                    <option value="gerente">📊 Gerente</option>
+                    <option value="admin">👑 Administrador</option>
+                  </select>
+                </div>
+
+                <div style={{ background: 'rgba(100,149,237,.1)', border: '1px solid rgba(100,149,237,.3)', color: '#6495ed', borderRadius: 8, padding: 12, fontSize: '0.85rem' }}>
+                  <i className="fas fa-info-circle"></i> Uma senha temporária será enviada por e-mail
+                </div>
+              </div>
+              <div className="modal-footer">
+                <button type="button" className="btn btn-ghost" onClick={() => setModalUsuario(false)}>Cancelar</button>
+                <button type="submit" className="btn btn-primary" disabled={savingUsuario}>
+                  {savingUsuario ? <><i className="fas fa-spinner fa-spin"></i></> : 'Criar Usuário'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL NOVA UNIDADE */}
+      {modalUnidade && (
+        <div className="modal-overlay" onClick={e => e.target === e.currentTarget && setModalUnidade(false)}>
+          <div className="modal">
+            <div className="modal-header">
+              <h3>Nova Unidade/Filial</h3>
+              <button className="btn btn-ghost btn-sm" onClick={() => setModalUnidade(false)}><i className="fas fa-times"></i></button>
+            </div>
+            <form onSubmit={salvarUnidade}>
+              <div className="modal-body">
+                <div className="form-group">
+                  <label>Nome da Unidade *</label>
+                  <input
+                    placeholder="Ex: Oficina Principal"
+                    value={formUnidade.nome}
+                    onChange={e => setFormUnidade({ ...formUnidade, nome: e.target.value })}
+                    required
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>Endereço *</label>
+                  <input
+                    placeholder="Rua, número"
+                    value={formUnidade.endereco}
+                    onChange={e => setFormUnidade({ ...formUnidade, endereco: e.target.value })}
+                    required
+                  />
+                </div>
+
+                <div className="form-row">
+                  <div className="form-group">
+                    <label>Cidade *</label>
+                    <input
+                      placeholder="São Paulo"
+                      value={formUnidade.cidade}
+                      onChange={e => setFormUnidade({ ...formUnidade, cidade: e.target.value })}
+                      required
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>UF *</label>
+                    <input
+                      placeholder="SP"
+                      maxLength="2"
+                      value={formUnidade.uf}
+                      onChange={e => setFormUnidade({ ...formUnidade, uf: e.target.value })}
+                      required
+                    />
+                  </div>
+                </div>
+              </div>
+              <div className="modal-footer">
+                <button type="button" className="btn btn-ghost" onClick={() => setModalUnidade(false)}>Cancelar</button>
+                <button type="submit" className="btn btn-primary">
+                  Adicionar Unidade
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
