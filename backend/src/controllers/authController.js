@@ -9,11 +9,22 @@ const makeToken = (user) =>
     { expiresIn: process.env.JWT_EXPIRES_IN }
   );
 
+const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 exports.register = async (req, res) => {
   try {
     const { nome_oficina, email_oficina, telefone, plano, nome, email, senha } = req.body;
     if (!nome_oficina || !email_oficina || !nome || !email || !senha)
       return res.status(422).json({ error: 'Preencha todos os campos obrigatórios' });
+
+    if (!emailRegex.test(email))
+      return res.status(422).json({ error: 'Formato de e-mail inválido' });
+
+    if (senha.length < 6)
+      return res.status(422).json({ error: 'A senha deve ter no mínimo 6 caracteres' });
+
+    if (nome.length > 100 || email.length > 150 || nome_oficina.length > 150)
+      return res.status(422).json({ error: 'Campo excede o tamanho máximo permitido' });
 
     const emailExiste = await db.get('SELECT id FROM usuarios WHERE email = ?', [email]);
     if (emailExiste) return res.status(409).json({ error: 'E-mail já cadastrado' });
@@ -37,6 +48,9 @@ exports.login = async (req, res) => {
   try {
     const { email, senha } = req.body;
     if (!email || !senha) return res.status(422).json({ error: 'E-mail e senha são obrigatórios' });
+
+    if (!emailRegex.test(email))
+      return res.status(422).json({ error: 'Formato de e-mail inválido' });
 
     const user = await db.get('SELECT * FROM usuarios WHERE email = ?', [email]);
     if (!user || !bcrypt.compareSync(senha, user.senha))
